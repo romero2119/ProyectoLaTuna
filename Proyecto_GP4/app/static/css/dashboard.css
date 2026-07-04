@@ -1,0 +1,42 @@
+.menu-dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 25px;
+    padding: 20px;
+}
+
+/* Tarjeta */
+.card-dashboard {
+    background: #fff;
+    border-radius: 12px;
+    padding: 25px 15px;
+    align-items: center;
+    text-align: center;
+    text-decoration: none;
+    color: #333;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+}
+
+.card-dashboard img {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 12px;
+    transition: transform 0.3s ease;
+}
+
+.card-dashboard p {
+    font-weight: bold;
+    letter-spacing: 1px;
+    font-size: 13px;
+}
+
+/* Hover elegante */
+.card-dashboard:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.card-dashboard:hover img {
+    transform: scale(1.1);
+}

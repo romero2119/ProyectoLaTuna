@@ -1,0 +1,189 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+
+<style>
+
+/* ===== CONFIGURACION GENERAL ===== */
+@page {
+  size: A4;
+  margin: 30px 40px;
+}
+
+body{
+  font-family: Helvetica, Arial, sans-serif;
+  font-size:12px;
+  color:#333;
+}
+
+/* ===== ENCABEZADO ===== */
+
+.header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  border-bottom:3px solid rgb(255,0,0); /* rojo principal */
+  padding-bottom:10px;
+  margin-bottom:20px;
+}
+
+.header .logo img{
+  width:90px;
+}
+
+.header .titulo{
+  text-align:right;
+}
+
+.header h1{
+  margin:0;
+  font-size:20px;
+  color:#b71c1c; /* rojo oscuro */
+  letter-spacing:1px;
+}
+
+.header p{
+  margin:3px 0 0 0;
+  font-size:11px;
+  color:#555;
+}
+
+/* ===== INFORMACION DEL REPORTE ===== */
+
+.info{
+  font-size:10px;
+  text-align:right;
+  margin-bottom:10px;
+  color:#666;
+}
+
+/* ===== TABLA ===== */
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+  font-size:11px;
+}
+
+/* encabezado tabla */
+
+thead{
+  background:#2e8b57; /* verde del sistema */
+  color:white;
+}
+
+th{
+  padding:10px 6px;
+  text-align:center;
+  border:1px solid #ddd;
+  font-weight:bold;
+}
+
+td{
+  padding:8px 6px;
+  border:1px solid #ddd;
+  text-align:left;
+}
+
+/* filas alternadas */
+
+tbody tr:nth-child(even){
+  background-color:#ffe0b2; /* fondo claro del sistema */
+}
+
+/* efecto limpio */
+
+tbody tr:hover{
+  background-color:#ffe4b5;
+}
+
+/* ===== TOTAL REGISTROS ===== */
+
+.footer{
+  margin-top:15px;
+  padding:8px;
+  background-color:#ffe4b5;
+  border-left:5px solid rgb(255,0,0);
+  font-weight:bold;
+  font-size:11px;
+}
+
+/* ===== NUMERACION DE PAGINAS ===== */
+
+@page{
+  @bottom-right{
+    content:"Página " counter(page) " de " counter(pages);
+    font-size:10px;
+    color:#555;
+  }
+}
+
+</style>
+</head>
+
+<body>
+
+    <!-- ENCABEZADO DEL REPORTE -->
+    <div class="header">
+
+        <div class="logo">
+            <img src="{% static 'img/Logo.png' %}" alt="Logo la tuna">
+        </div>
+
+        <div class="titulo">
+            <h1>{{ titulo }}</h1>
+            <p>Reporte generado automáticamente</p>
+        </div>
+
+    </div>
+
+    <!-- TABLA -->
+
+    <table>
+
+        <thead>
+            <tr>
+                {% for columna in columnas %}
+                <th>{{ columna }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for fila in datos %}
+            <tr>
+
+                {% for valor in fila %}
+                <td>{{ valor }}</td>
+                {% endfor %}
+
+            </tr>
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+    <div class="footer">
+        <p>Total de registros: {{ datos|length }}</p>
+    </div>
+
+    <div class="info">
+        Generado el: {{ now|date:'d/m/Y H:i:s' }}
+    </div>
+
+</body>
+
+  <div class="info">
+    Generado el: {% now "d/m/Y H:i:s" %}
+  </div>
+
+
+</body>
+</html>
+

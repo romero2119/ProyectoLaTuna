@@ -1,0 +1,166 @@
+{% extends 'main.html' %}
+{% load static %}
+
+{% block Contenido %}
+<div class="tabla-wrapper">
+    <form method="GET" style="display:flex; align-items:center; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
+
+    <!-- Buscar -->
+    <input type="text"
+           name="buscar"
+           placeholder="Buscar por usuario, nombre o cédula"
+           value="{{ buscar }}"
+           class="form-control"
+           style="width:250px;">
+
+    <!-- Estado -->
+    <select name="estado" class="form-control" style="width:170px;">
+        <option value="">Todos los estados</option>
+
+        <option value="activo"
+            {% if estado == "activo" %}selected{% endif %}>
+            Activo
+        </option>
+
+        <option value="inactivo"
+            {% if estado == "inactivo" %}selected{% endif %}>
+            Inactivo
+        </option>
+
+    </select>
+
+    <!-- Rol -->
+    <select name="rol" class="form-control" style="width:170px;">
+
+        <option value="">Todos los roles</option>
+
+        {% for valor, nombre in roles %}
+            <option value="{{ valor }}"
+                {% if rol == valor %}selected{% endif %}>
+                {{ nombre }}
+            </option>
+        {% endfor %}
+
+    </select>
+
+    <!-- Buscar -->
+    <button type="submit" class="btn btn-primary">
+        <i class="fas fa-search"></i> Buscar
+    </button>
+
+    <!-- Limpiar -->
+    <a href="{% url 'usuarios:listar' %}" class="btn btn-secondary">
+        <i class="fas fa-times"></i> Limpiar
+    </a>
+
+    <div style="flex:1;"></div>
+    <a href="{% url 'usuarios:exportar_pdf' %}?buscar={{ buscar }}&estado={{ estado }}&rol={{ rol }}"
+   class="btn btn-danger btn-sm btn-exportar">
+        <i class="fas fa-file-pdf"></i> Exportar PDF
+    </a>
+    <a href="{% url 'usuarios:exportar_excel' %}?buscar={{ buscar }}&estado={{ estado }}&rol={{ rol }}"
+   class="btn btn-success btn-sm btn-exportar">
+        <i class="fas fa-file-excel"></i> Exportar Excel
+    </a>
+    <a href="{% url 'usuarios:crear' %}" class="btn btn-primary btn-xs">
+        <i class="fas fa-user-plus"></i> Crear nuevo usuario
+    </a>
+    <a href="{% url 'usuarios:listar_permisos' %}" class="btn btn-info btn-xs" title="Permisos">
+        <i class="fas fa-key"></i> Permisos
+    </a>
+
+
+</form>
+    <div class="card-body">
+        <table class="tabla" id="tabla">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Usuario</th>
+                    <th>Nombre Completo</th>
+                    <th>Rol</th>
+                    <th>Cedula</th>
+                    <th>Estado</th>
+                    <th>Opciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in usuarios %}
+                <tr>
+                    <td>{{ u.id }}</td>
+                    <td>{{ u.username }}</td>
+                    <td>{{ u.first_name }} {{ u.last_name }}</td>
+                    <td>
+                        {% if u.perfil %}
+                        {{ u.perfil.get_rol_display }}
+                        {% else %}
+                        <span class="text-muted">Sin perfil</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ u.perfil.cedula|default:"N/A" }}</td>
+                    <td>
+                        {% if u.is_active %}
+                        <span class="badge badge-success text-dark">Activo</span>
+                        {% else %}
+                        <span class="badge badge-danger text-dark">Inactivo</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'usuarios:editar' u.id %}" class="btn btn-warning btn-xs" title="Editar">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>
+                        <form method="post" action="{% url 'usuarios:cambiar_estado' u.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            {% if u.is_active %}
+                            <button type="submit" class="btn btn-danger btn-xs" title="Desactivar">
+                                <i class="fas fa-user-slash"></i> Desactivar
+                            </button>
+                            {% else %}
+                            <button type="submit" class="btn btn-success btn-xs" title="Activar">
+                                <i class="fas fa-user-check"></i> Activar
+                            </button>
+                            {% endif %}
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align:center;">No hay usuarios registrados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer">
+        
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        {% if messages %}
+        {% for message in messages %}
+        Swal.fire({
+            icon: 'success',
+            title: '¡Listo!',
+            text: '{{ message }}',
+            confirmButtonColor: '#2e8b57',
+            confirmButtonText: 'Aceptar',
+            showConfirmButton: true,
+            allowOutsideClick: false
+        });
+        {% endfor %}
+        {% endif %}
+
+        function mostrarAlerta(mensaje) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Sin resultados',
+                text: mensaje,
+                confirmButtonColor: '#e53935',
+                confirmButtonText: 'Entendido'
+            });
+        }
+    });
+</script>
+{% endblock %}

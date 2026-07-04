@@ -1,0 +1,119 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Jokerman", cursive;
+}
+
+body {
+  background: url("../imagenes/fondo.png") center center/cover no-repeat;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+.card {
+  width: 500px;
+  background: #fef8e8;
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+  border: 2px solid #e5c07b;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+  animation: subir 0.7s;
+}
+
+.logo {
+  width: 110px;
+  margin-bottom: 20px;
+}
+
+.cactus {
+  font-size: 85px;
+  animation: flotar 3s infinite;
+}
+
+h3 {
+  color: #107e38;
+  letter-spacing: 2px;
+  margin-top: 10px;
+}
+
+h1 {
+  margin: 10px 0;
+  color: #fc4141;
+  font-size: 34px;
+}
+
+p {
+  color: #555;
+  line-height: 1.8;
+  margin: 20px 0;
+}
+
+.linea {
+  width: 80px;
+  height: 4px;
+  background: #107e38;
+  margin: 20px auto;
+  border-radius: 30px;
+}
+
+.mensaje {
+  background: #fff5d6;
+  padding: 18px;
+  border-left: 5px solid #fc4141;
+  border-radius: 10px;
+  color: #555;
+  margin-bottom: 30px;
+}
+
+.btn {
+  display: inline-block;
+  padding: 14px 35px;
+  background: linear-gradient(90deg, #107e38, #19a548);
+  color: white;
+  border-radius: 40px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(16, 126, 56, 0.4);
+}
+
+@keyframes subir {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes flotar {
+  0% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}

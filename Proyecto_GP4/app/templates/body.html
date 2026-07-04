@@ -1,0 +1,24 @@
+{% extends "index.html" %}
+{% load static %}
+{% block body %}
+
+<body>
+
+  {% include 'header.html' %}
+
+  {% include 'nav.html' %}
+  {% block main %}
+  {% endblock main %}
+  {%include 'footer.html'%}
+  <script src="{% static 'lib/sweetalert2/sweetalert2.all.min.js' %}"></script>
+
+  <script src="{% static 'lib/jquery/jquery-3.6.0.min.js' %}"></script>
+  <script src="{% static 'lib/bootstrap-4.4.1-dist/js/bootstrap.min.js' %}"></script>
+  <script defer src="{% static 'js/sienna-accessibility.umd.js' %}"></script>
+  <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+{% block js %}
+{% endblock %}
+
+</body>
+
+{% endblock %}

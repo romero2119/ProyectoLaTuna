@@ -1,0 +1,109 @@
+.chat-container {
+    position: fixed;
+    bottom: 90px;
+    right: 80px;
+    width: 280px;
+    height: 300px;
+    background: #ffffff;
+    border-radius: 15px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    display: none; 
+    flex-direction: column;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    border: 2px solid #198754;
+    z-index: 9999;
+}
+
+.chat-container.active {
+    display: flex;
+}
+
+
+.chat-container::before {
+    content: "este es tu asistente";
+    background: #dc3545; 
+    color: white;
+    padding: 10px;
+    font-weight: bold;
+    text-align: center;
+    font-size: 14px;
+}
+
+
+.chat-box {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    background: #fff8e1;
+}
+
+
+.message {
+    max-width: 75%;
+    padding: 8px 12px;
+    margin: 5px 0;
+    border-radius: 12px;
+    font-size: 13px;
+}
+
+
+.user {
+    align-self: flex-end;
+    background: #198754;
+    color: white;
+}
+
+
+.bot {
+    align-self: flex-start;
+    background: #e9ecef;
+    color: #333;
+}
+
+.chat-input {
+    display: flex;
+    border-top: 1px solid #ddd;
+    background: white;
+}
+
+.chat-input input {
+    flex: 1;
+    border: none;
+    padding: 10px;
+    outline: none;
+    font-size: 13px;
+}
+
+.chat-input button {
+    background: #dc3545; /* rojo */
+    color: white;
+    border: none;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.chat-input button:hover {
+    background: #bb2d3b;
+}
+
+.chat-toggle {
+    position: fixed;
+    bottom: 20px; 
+    right: 20px;
+    background: #ffc107;
+    color: black;
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 26px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    z-index: 10000;
+}

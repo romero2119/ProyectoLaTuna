@@ -1,0 +1,131 @@
+{% extends "main.html" %}
+{% load static %}
+
+{% block Contenido %}
+<div style="flex: 1;"></div>
+    <a href="{{ crear_url }}" class="btn btn-success">
+        <i class="fas fa-plus"></i> Crear Nueva Receta
+    </a>
+</div>
+
+<div class="tabla-wrapper">
+    <table class="tabla" id="tabla">
+        <thead class="table-dark">
+            <tr>
+                <th>#</th>
+                <th>Plato</th>
+                <th>Insumos</th>
+                <th>Ficha Técnica</th>
+                <th>Editar</th>
+                <th>Eliminar</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for receta in object_list %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ receta.plato.nombre }}</td>
+                <td>
+                    <ul class="mb-0 small">
+                        {% for detalle in receta.detalles.all %}
+                        <li>{{ detalle.insumo.nombre }} ({{ detalle.cantidad }} {{ detalle.insumo.unidad }})</li>
+                        {% endfor %}
+                    </ul>
+                </td>
+                <td>
+                    <button  class="btn btn-dark btn-sm" onclick="abrirModal({{ forloop.counter0 }})" title="Ver Detalles">
+                        Ver Detalles
+                    </button>
+                </td>
+                <td>
+                    <a href="{% url 'app:editar_receta' receta.id %}" class="btn btn-warning btn-sm" title="Editar receta">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                </td>
+                <td>
+                    <a href="{% url 'app:eliminar_receta' receta.id %}" class="btn btn-danger btn-sm" title="Eliminar receta">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="modal fade" id="detalleModal" tabindex="-1">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content rounded-3 shadow">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">Insumos de la Receta</h5>
+                    <button type="button"  class="btn-close btn-close-white" data-bs-dismiss="modal" title="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <h4 id="nombrePlato" class="text-uppercase fw-bold mb-4"></h4>
+                    <table class="table table-hover border">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Insumo</th>
+                                <th>Cantidad</th>
+                                <th>Valor Unitario</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaInsumos"></tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" title="Cerrar">
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{{ recetas_data|json_script:"recetas-data" }}
+
+{% block js %}
+<script>
+let recetasData = [];
+const dataElement = document.getElementById('recetas-data');
+if (dataElement) {
+    recetasData = JSON.parse(dataElement.textContent);
+}
+
+function abrirModal(index) {
+    const receta = recetasData[index];
+    if (!receta) return;
+
+    document.getElementById("nombrePlato").innerText = receta.plato_nombre;
+    const tbody = document.getElementById("tablaInsumos");
+    tbody.innerHTML = "";
+
+    receta.detalles.forEach(detalle => {
+        // Alerta si no hay stock (opcional, pero profesional)
+        const stockStatus = !detalle.stock_suficiente 
+            ? `<br><small class="text-danger"> Stock bajo</small>` 
+            : "";
+
+        tbody.innerHTML += `
+            <tr>
+                <td class="align-middle">
+                    <strong>${detalle.insumo_nombre}</strong>
+                    ${stockStatus}
+                </td>
+                <td class="align-middle">
+                    ${detalle.cantidad.toFixed(2)} ${detalle.unidad}
+                </td>
+                <td class="align-middle">
+                    $${detalle.precio_unitario.toLocaleString('es-CO')}
+                </td>
+            </tr>
+        `;
+    });
+
+    const modalInstance = new bootstrap.Modal(document.getElementById('detalleModal'));
+    modalInstance.show();
+}
+</script>
+{% endblock js %}
+{% endblock %}

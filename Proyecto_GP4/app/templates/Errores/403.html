@@ -1,0 +1,44 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+    <title>Acceso Restringido | La Tuna</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/403.css' %}">
+
+</head>
+
+<body>
+<div class="container">
+    <div class="card">
+        <img src="{% static 'imagenes/logo.png' %}" class="logo">
+        <div class="cactus">
+
+        </div>
+        <h3>¡Ándale!</h3>
+        <h1>ACCESO RESTRINGIDO</h1>
+        <p>
+            Lo sentimos.
+            Este módulo está disponible únicamente para usuarios autorizados.
+        </p>
+
+        <div class="linea"></div>
+
+        <div class="mensaje">
+            <i class="ri-information-line"></i>
+            Si necesitas ingresar a esta sección, comunícate con el administrador del sistema.
+        </div>
+
+        <a href="{% url 'app:dashboard' %}" class="btn">
+            <i class="ri-home-4-line"></i>
+            Volver al inicio
+        </a>
+    </div>
+</div>
+
+</body>
+
+</html>

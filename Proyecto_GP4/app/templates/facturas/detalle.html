@@ -1,0 +1,156 @@
+{% extends 'main.html' %}
+{% load static %}
+
+{% block Contenido %}
+
+<div class="card shadow-sm" id="contenido-imprimible">
+    <div class="card-header bg-primary text-white">
+        <h3 class="card-title" style="margin:0;">
+            <i class="fa-solid fa-file-invoice-dollar"></i> Detalle de Factura
+        </h3>
+    </div>
+    <div class="card-body">
+        <div class="row">
+
+            <!-- DATOS FACTURA -->
+            <div class="col-md-6">
+                <h5 class="text-secondary border-bottom pb-2 mb-3">
+                    <i class="fas fa-file-invoice"></i> Información de la Factura
+                </h5>
+                <table class="table table-bordered">
+                    <tr>
+                        <th style="width:40%">ID Factura</th>
+                        <td>{{ factura.codigo }}</td>
+                    </tr>
+                    <tr>
+                        <th>Fecha</th>
+                        <td>{{ factura.fecha_hora|date:'Y-m-d H:i' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Método de Pago</th>
+                        <td>{{ factura.metodo_pago }}</td>
+                    </tr>
+                    <tr>
+                        <th>Total Facturado</th>
+                        <td><strong>${{ factura.valor_total }}</strong></td>
+                    </tr>
+                    {% if factura.observacion %}
+                    <tr>
+                        <th>Observación</th>
+                        <td class="text-danger">{{ factura.observacion }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+
+            <!-- DATOS VENTA Y USUARIO -->
+            <div class="col-md-6">
+                <h5 class="text-secondary border-bottom pb-2 mb-3">
+                    <i class="fas fa-shopping-cart"></i> Información de la Venta
+                </h5>
+                <table class="table table-bordered">
+                    <tr>
+                        <th style="width:40%">ID Venta</th>
+                        <td>{{ factura.venta.codigo }}</td>
+                    </tr>
+                    <tr>
+                        <th>Usuario</th>
+                        <td>{{ factura.venta.usuario }}</td>
+                    </tr>
+                    <tr>
+                        <th>Total Venta</th>
+                        <td><strong>${{ factura.venta.total }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Fecha Venta</th>
+                        <td>{{ factura.venta.fecha_venta|date:'Y-m-d H:i' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Monto Pagado</th>
+                        <td>
+                            {% with pago=factura.venta.pago_set.first %}
+                                {% if pago %}
+                                    <strong>${{ pago.monto }}</strong>
+                                {% else %}
+                                    <span class="text-muted">Sin pago registrado</span>
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+        </div>
+    </div>
+    <div class="card-footer text-right no-print">
+        {% if factura.activo %}
+            <button onclick="window.print()" class="btn btn-primary btn-xs">
+                <i class="fas fa-print"></i> Imprimir
+            </button>
+        {% else %}
+            <button type="button" class="btn btn-secondary btn-xs" id="btn-imprimir-bloqueado">
+                <i class="fas fa-print"></i> Imprimir
+            </button>
+        {% endif %}
+        <a href="{% url 'app:listar_facturas' %}" class="btn btn-secondary btn-xs">
+            <i class="fas fa-arrow-left"></i> Volver al listado
+        </a>
+    </div>
+</div>
+
+<style>
+    @media print {
+        body * { visibility: hidden; }
+        #contenido-imprimible,
+        #contenido-imprimible * { visibility: visible; }
+        #contenido-imprimible {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+        }
+        .no-print { display: none !important; }
+    }
+</style>
+
+<script>
+    const btnBloqueado = document.getElementById('btn-imprimir-bloqueado');
+    if (btnBloqueado) {
+        btnBloqueado.addEventListener('click', function() {
+            Swal.fire({
+                icon: 'error',
+                title: ' La factura esta inactiva',
+                text: 'No se puede imprimir una factura que esta desactivada....',
+                confirmButtonColor: '#e53935',
+                confirmButtonText: 'Entendido'
+            });
+        });
+    }
+</script>
+</div>
+
+
+<!-- aca estyamos con los estilos pa la impresion -->
+<style>
+    @media print {
+        /* oculatmos menos factura*/
+        body * {
+            visibility: hidden;
+        }
+        #contenido-imprimible,
+        #contenido-imprimible * {
+            visibility: visible;
+        }
+        #contenido-imprimible {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+        }
+        .no-print {
+            display: none !important;
+        }
+    }
+</style>
+
+{% endblock %}

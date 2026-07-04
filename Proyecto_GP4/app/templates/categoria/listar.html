@@ -1,0 +1,124 @@
+{% extends "main.html" %}
+{% load static %}
+{% block Contenido %}
+<div class="tabla-wrapper">
+  <form method="GET" class="buscador">
+      <input type="text" name="buscar" placeholder="Buscar por nombre de categoria" value="{{ request.GET.buscar }}">
+      <input type="text" name="estado" placeholder="Buscar por estado" value="{{ request.GET.estado }}">
+      
+      <button type="submit" class="btn btn-primary" title="Buscar">
+        <i class="fas fa-search"></i> Buscar
+      </button>
+
+      <div> 
+        <a href="{% url 'app:exportar_categorias_pdf' %}" class="btn btn-danger btn-xs btn-exportar" title="Exportar PDF">
+          <i class="fas fa-file-pdf"></i> Exportar PDF
+        </a>
+
+        <a href="{% url 'app:exportar_categorias_excel' %}" class="btn btn-success btn-xs btn-exportar" title="Exportar Excel">
+          <i class="fas fa-file-excel"></i> Exportar Excel
+        </a>
+        <a href="{{crear_url}}" class="btn btn-success btn-xs">
+          <i class="fas fa-plus"></i> Crear nueva categoria
+        </a>
+      </div>
+
+    </form>
+
+  <table class="tabla" id="tabla">
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">Nombre</th>
+        <th scope="col">Descripción</th>
+        <th scope="col">Estado</th>
+        <th scope="col">Fecha de Creación</th>
+        <th scope="col">Fecha de Actualización</th>
+        <th scope="col">Editar</th>
+        <th scope="col">Eliminar</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in object_list %}
+      <tr>
+        <td>{{ c.id }}</td>
+        <td>{{ c.nombre }}</td>
+        <td data-col="descripcion">{{ c.descripcion }}</td>
+        <td>{{ c.estado }}</td>
+        <td>{{ c.fecha_creacion }}</td>
+        <td>{{ c.fecha_actualizacion }}</td>
+        <td>
+          <a href="{% url 'app:editar_categoria' c.id %}" title="Editar" class="btn btn-primary btn-xs"><i class="fas fa-edit"></i></a>
+        </td>
+        <td>
+          <a href="{% url 'app:eliminar_categoria' c.id %}" title="Eliminar" class="btn btn-danger btn-xs"><i class="fas fa-trash"></i></a>
+        </td>
+      </tr>
+      {% empty %}
+        <tr>
+          <td colspan="8" class="text-center">No se encontraron categorias.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    {% if messages %}
+        {% for message in messages %}
+            Swal.fire({
+                icon: 'success',
+                title: '¡Listo!',
+                text: '{{ message|escapejs }}',
+                confirmButtonColor: '#2e8b57',
+                confirmButtonText: 'Aceptar',
+                allowOutsideClick: false
+            });
+        {% endfor %}
+    {% endif %}
+
+    function mostrarAlerta(mensaje) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Sin resultados',
+            text: mensaje,
+            confirmButtonColor: '#e53935',
+            confirmButtonText: 'Entendido',
+            allowOutsideClick: false
+        });
+    }
+
+
+    document.querySelectorAll('.btn-exportar').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            const hayCategorias = {{ object_list|length|default:0 }} > 0;
+
+            if (!hayCategorias) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+
+                const filtroNombre = "{{ request.GET.buscar|escapejs }}";
+                const filtroEstado = "{{ request.GET.estado|escapejs }}";
+
+                let mensaje = "No hay categorías para exportar.";
+
+                if (filtroNombre && filtroEstado) {
+                    mensaje = `No se encontraron categorías con nombre "${filtroNombre}" y estado "${filtroEstado}".`;
+                } else if (filtroNombre) {
+                    mensaje = `No se encontraron categorías con nombre "${filtroNombre}".`;
+                } else if (filtroEstado) {
+                    mensaje = `No se encontraron categorías con estado "${filtroEstado}".`;
+                }
+
+                mostrarAlerta(mensaje);
+            }
+        });
+    });
+
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,159 @@
+{% extends "main.html" %}
+{% load static %}
+{% block Contenido %}
+
+
+  <!-- BOTONES DE EXPORTACION -->
+  <div style="margin-bottom:15px; display:flex; gap:10px;">
+    <a href="{% url 'app:exportar_proveedores_pdf' %}"  class="btn btn-danger btn-xs btn-exportar" title="Exportar a PDF">
+      <i class="fas fa-file-pdf"></i> Exportar PDF
+    </a>
+
+    <a href="{% url 'app:exportar_proveedores_excel' %}" class="btn btn-success btn-xs btn-exportar" title="Exportar a Excel">
+      <i class="fas fa-file-excel"></i> Exportar Excel
+    </a>
+    <a href="{{crear_url}}" class="btn btn-success btn-xs">
+      <i class="fas fa-plus"></i> Crear nuevo proveedor
+    </a>
+  </div>
+<form method="GET" style="margin-bottom:15px; display:flex; gap:10px;">
+    <input
+        type="text"
+        name="buscar"
+        value="{{ buscar }}"
+        class="form-control"
+        placeholder="Buscar proveedor..."
+        style="max-width:350px;"
+    >
+
+    <button type="submit" class="btn btn-primary btn-xs">
+        <i class="fas fa-search"></i> Buscar
+    </button>
+
+    <a href="{% url 'app:listar_proveedores' %}" class="btn btn-secondary btn-xs">
+        <i class="fas fa-times"></i> Limpiar
+    </a>
+</form>
+  <div class="tabla-wrapper">
+    <table class="tabla" id="tabla">
+      <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">Nombre</th>
+          <th scope="col">Teléfono</th>
+          <th scope="col">Correo Electrónico</th>
+          <th scope="col">Dirección</th>
+          <th scope="col">Editar</th>
+          <th scope="col">Eliminar</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in object_list %}
+        <tr>
+          <td>{{ u.id_proveedor }}</td>
+          <td>{{ u.nombre_proveedor }}</td>
+          <td>{{ u.telefono }}</td>
+          <td>{{ u.correo_electronico }}</td>
+          <td>{{ u.direccion }}</td>
+          <td>
+            <a href="{% url 'app:editar_proveedor' u.id_proveedor %}" class="btn btn-primary btn-xs" title="Editar proveedor">
+              <i class="fas fa-edit"></i>
+            </a>
+          </td>
+          <td>
+            <a href="{% url 'app:eliminar_proveedor' u.id_proveedor %}" class="btn btn-danger btn-xs" title="Eliminar proveedor">
+              <i class="fas fa-trash"></i>
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center">No se encontraron proveedores.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+
+  <!-- PAGINACIÓN -->
+  {% if is_paginated %}
+  <div style="display:flex; justify-content:center; margin-top:15px; gap:5px;">
+    {% if page_obj.has_previous %}
+      <a href="?page=1" class="btn btn-secondary btn-xs" title="Ir a la primera página">« Primera</a>
+      <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary btn-xs" title="Ir a la página anterior">‹ Anterior</a>
+    {% endif %}
+
+    {% for num in paginator.page_range %}
+      {% if page_obj.number == num %}
+        <span class="btn btn-primary btn-xs">{{ num }}</span>
+      {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <a href="?page={{ num }}" class="btn btn-secondary btn-xs" title="Ir a la página {{ num }}">{{ num }}</a>
+      {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary btn-xs" title="Ir a la siguiente página">Siguiente ›</a>
+      <a href="?page={{ paginator.num_pages }}" class="btn btn-secondary btn-xs" title="Ir a la última página">Última »</a>
+    {% endif %}
+  </div>
+  <div style="text-align:center; margin-top:8px; color:#888; font-size:0.85em;">
+    Página {{ page_obj.number }} de {{ paginator.num_pages }} — {{ paginator.count }} registros en total
+  </div>
+  {% endif %}
+
+  <!-- ====================== SCRIPT SWEETALERT ====================== -->
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+
+      {% if messages %}
+          {% for message in messages %}
+              Swal.fire({
+                  icon: '{% if message.tags == "success" %}success{% elif message.tags == "error" %}error{% elif message.tags == "warning" %}warning{% else %}info{% endif %}',
+                  title: '{% if message.tags == "success" %}Éxito{% elif message.tags == "error" %}Error{% elif message.tags == "warning" %}Advertencia{% else %}Info{% endif %}',
+                  text: '{{ message|escapejs }}',
+                  confirmButtonColor: '{% if message.tags == "success" %}#43a047{% else %}#e53935{% endif %}',
+                  confirmButtonText: 'Aceptar',
+                  timer: 3000,
+                  timerProgressBar: true
+              });
+          {% endfor %}
+      {% endif %}
+
+      function mostrarAlerta(mensaje) {
+          Swal.fire({
+              icon: 'warning',
+              title: 'Sin resultados',
+              text: mensaje,
+              confirmButtonColor: '#e53935',
+              confirmButtonText: 'Entendido',
+              allowOutsideClick: false
+          });
+      }
+
+      // Bloquear exportación cuando no hay proveedores
+      document.querySelectorAll('.btn-exportar').forEach(function (btn) {
+          btn.addEventListener('click', function (e) {
+              const hayProveedores = {{ object_list|length|default:0 }} > 0;
+
+              if (!hayProveedores) {
+                  e.preventDefault();
+                  e.stopImmediatePropagation();
+
+                  let mensaje = "No hay proveedores para exportar.";
+
+                  // Si tienes filtro de búsqueda (ej. por nombre), puedes agregarlo aquí
+                  const filtroNombre = "{{ request.GET.buscar|escapejs }}";
+                  if (filtroNombre) {
+                      mensaje = `No se encontraron proveedores con nombre "${filtroNombre}".`;
+                  }
+
+                  mostrarAlerta(mensaje);
+              }
+          });
+      });
+
+  });
+  </script>
+
+{% endblock %}

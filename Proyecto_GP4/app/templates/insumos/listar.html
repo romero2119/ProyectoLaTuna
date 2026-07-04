@@ -1,0 +1,191 @@
+{% extends "main.html" %}
+{% load static %}
+{% block Contenido %}
+
+<div style="margin-bottom:15px; display:flex; gap:10px;">
+  <a href="{% url 'app:exportar_insumos_pdf' %}" class="btn btn-danger btn-xs"
+  onclick="verificarExportar(event)"
+   class="btn btn-danger btn-xs">
+  
+    <i class="fas fa-file-pdf"></i> Exportar PDF
+  </a>
+
+  <a href="{% url 'app:exportar_insumos_excel' %}" title="Exportar a Excel" class="btn btn-success btn-xs"
+  onclick="verificarExportar(event)"
+   class="btn btn-success btn-xs">
+    <i title="Exportar a Excel" class="fas fa-file-excel"></i> Exportar Excel
+  </a>
+  <a href="{% url 'app:crear_insumos' %}" class="btn btn-success">
+    <i class="fas fa-plus"></i> Crear nuevo insumo
+  </a>
+
+</div>
+
+<div class="tabla-wrapper">
+  
+<form method="get" class="mb-3">
+  <div class="row">
+
+    <div class="col-md-4">
+      <select name="categoria" class="form-control">
+  <option value="">Todas las categorías</option>
+  {% for cat in Categoria %}
+    <option value="{{ cat.id }}"
+      {% if categoria_seleccionada == cat.id|stringformat:"s" %}
+        selected
+      {% endif %}
+    >
+      {{ cat.nombre }}
+    </option>
+  {% endfor %}
+</select>
+    </div>
+    <div class="col-md-3">
+  <select name="stock_bajo" class="form-control">
+    <option value="">Todos los stocks</option>
+    <option value="1"
+      {% if stock_bajo == "1" %}selected{% endif %}>
+      Stock menor a 10
+    </option>
+  </select>
+</div>
+<div class="col-md-3">
+  <select name="orden" class="form-control">
+    <option value="">Ordenar por stock</option>
+  
+
+    <option value="desc"
+      {% if orden == "desc" %}selected{% endif %}>
+      Mayor a menor
+    </option>
+    
+    <option value="asc"
+      {% if orden == "asc" %}selected{% endif %}>
+      Menor a mayor
+    </option>
+  </select>
+</div>
+
+
+<div class="card-footer">
+  <a href="{% url 'app:crear_insumos' %}" title="Crear nuevo insumo" class="btn btn-success">
+    <i class="fas fa-plus"></i> Crear nuevo insumo
+  </a>
+</div>
+    <div class="col-md-4">
+      <button type="submit" title="Buscar" class="btn btn-primary">
+        <i class="fas fa-search"></i> Buscar
+      </button>
+    </div>
+    
+    
+  </div>
+</form>
+<table class="tabla" id="tabla">
+  <h1>{{ categoria }}</h1>
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Nombre</th>
+      <th scope="col" data-col="descripcion" >Descripción</th>
+      <th scope="col">Categoria</th>
+      <th scope="col">stock</th>
+      <th scope="col">valor</th>
+      <th scope="col">Editar</th>
+      <th scope="col">Eliminar</th>
+    </tr>
+  </thead>
+  <tbody>
+    
+    {% for m in object_list %}
+    <tr>
+      <td>{{ m.id_insumo}}</td>
+      <td>{{ m.nombre }}</td>
+      <td data-col="descripcion">{{ m.descripcion }}</td>
+      <td>{{ m.categoria }}</td>
+ <td>
+    <span class="badge {{ m.estado_stock.clase }}">
+        {{ m.estado_stock.texto }}
+    </span>
+</td>
+      <td>{{ m.valor }}</td>
+      <td>
+        <a href="{% url 'app:editar_insumos' m.id_insumo %}" title="Editar" class="btn btn-primary btn-xs"><i class="fas fa-edit"></i></a>
+      </td>
+      <td>
+        <a href="{% url 'app:eliminar_insumos' m.id_insumo %}" title="Eliminar" class="btn btn-danger btn-xs"><i class="fas fa-trash"></i></a>
+      </td>
+    </tr>
+    {% empty %}
+      <tr>
+        <td colspan="8" class="text-center">
+          No hay insumos disponibles.
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<!-- PAGINACIÓN -->
+{% if is_paginated %}
+<div style="display:flex; justify-content:center; margin-top:15px; gap:5px;">
+
+  {% if page_obj.has_previous %}
+    <a href="?page=1" title="Ir a la primera página" class="btn btn-secondary btn-xs">« Primera</a>
+    <a href="?page={{ page_obj.previous_page_number }}" title="Ir a la página anterior" class="btn btn-secondary btn-xs">‹ Anterior</a>
+  {% endif %}
+
+  {% for num in paginator.page_range %}
+    {% if page_obj.number == num %}
+      <span class="btn btn-primary btn-xs">{{ num }}</span>
+    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+      <a href="?page={{ num }}" title="Ir a la página {{ num }}" class="btn btn-secondary btn-xs">{{ num }}</a>
+    {% endif %}
+  {% endfor %}
+
+  {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}" title="Ir a la página siguiente" class="btn btn-secondary btn-xs">Siguiente ›</a>
+    <a href="?page={{ paginator.num_pages }}" title="Ir a la última página" class="btn btn-secondary btn-xs">Última »</a>
+  {% endif %}
+
+</div>
+<div style="text-align:center; margin-top:8px; color:#888; font-size:0.85em;">
+  Página {{ page_obj.number }} de {{ paginator.num_pages }} — {{ paginator.count }} registros en total
+</div>
+{% endif %}
+
+{% block js %}
+<script>
+    const hayInsumos = {{ object_list|length }} > 0;
+
+    function verificarExportar(e) {
+        if (!hayInsumos) {
+            e.preventDefault();
+
+            const filtroCategoria = "{{ categoria_seleccionada }}";
+            const filtroStock     = "{{ stock_bajo }}";
+            const filtroOrden     = "{{ orden }}";
+
+            let mensaje = "No hay insumos para exportar.";
+
+            if (filtroCategoria && filtroStock) {
+                mensaje = `No se encontraron insumos con esa categoría y con stock bajo.`;
+            } else if (filtroCategoria) {
+                mensaje = `No se encontraron insumos en la categoría seleccionada.`;
+            } else if (filtroStock) {
+                mensaje = `No se encontraron insumos con stock bajo.`;
+            }
+
+            Swal.fire({
+                icon: 'warning',
+                title: 'Sin resultados',
+                text: mensaje,
+                confirmButtonColor: '#e53935',
+                confirmButtonText: 'Entendido'
+            });
+        }
+    }
+</script>
+{% endblock %}
+{% endblock %}

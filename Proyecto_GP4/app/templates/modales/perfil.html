@@ -1,0 +1,110 @@
+{% load static %}
+
+<div class="modal fade" id="perfilModal" tabindex="-1" aria-labelledby="perfilModalLabel" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+
+        <div class="modal-content perfil-modal">
+
+            <div class="perfil-header">
+
+                <button type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal">
+                </button>
+
+                <div class="avatar">
+
+                    {{ request.user.first_name|first|default:request.user.username|first }}{{ request.user.last_name|first }}
+
+                </div>
+
+                <h3>
+                    {{ request.user.first_name }}
+                    {{ request.user.last_name }}
+                </h3>
+
+                <span class="badge-rol
+                    {% if request.user.perfil.rol == 'administrador' %}
+                        admin
+                    {% else %}
+                        empleado
+                    {% endif %}
+                ">
+                    {{ request.user.perfil.get_rol_display }}
+                </span>
+
+            </div>
+
+            <div class="perfil-body">
+
+                <div class="info-card">
+                    <i class="fas fa-user"></i>
+
+                    <div>
+                        <small>Usuario</small>
+                        <strong>{{ request.user.username }}</strong>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <i class="fas fa-envelope"></i>
+
+                    <div>
+                        <small>Correo</small>
+                        <strong>{{ request.user.email }}</strong>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <i class="fas fa-id-card"></i>
+
+                    <div>
+                        <small>Cédula</small>
+                        <strong>{{ request.user.perfil.cedula }}</strong>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <i class="fas fa-phone"></i>
+
+                    <div>
+                        <small>Teléfono</small>
+                        <strong>{{ request.user.perfil.telefono|default:"No registrado" }}</strong>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <i class="fas fa-calendar-plus"></i>
+
+                    <div>
+                        <small>Registrado</small>
+                        <strong>{{ request.user.date_joined|date:"d/m/Y" }}</strong>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <i class="fas fa-clock"></i>
+
+                    <div>
+                        <small>Último acceso</small>
+                        <strong>{{ request.user.last_login|date:"d/m/Y H:i" }}</strong>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="perfil-footer">
+
+                <a href="{% url 'login:password_reset' %}" title="Cambiar contraseña" class="btn-perfil password">
+                    <i class="fas fa-key"></i>
+                    Cambiar contraseña
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

@@ -1,0 +1,23 @@
+{% load static %}
+<nav>
+    <button class="hamburger" id="toggle">
+        <span></span><span></span><span></span>
+    </button>
+
+    <div title="Menú" class="menu-hamburguesa" id="menuHamburguesa">
+        <ul>
+            <li><a href="{% url 'app:listar_pedidos' %}">Pedidos</a></li>
+            <li><a href="{% url 'app:listar_facturas' %}">Facturas</a></li>
+            <li><a href="{% url 'app:listar_pagos' %}">Pagos</a></li>
+            <li><a href="{% url 'app:listar_comandas' %}">Comandas</a></li>
+            <li><a href="{% url 'app:listar_productos' %}">Productos</a></li>
+            <li><a href="{% url 'app:listar_ventas' %}">Ventas</a></li>
+            
+        </ul>
+    </div>
+    <a href="{% url 'app:dashboard' %}"><img title="Inicio" class="icono" src="{% static 'imagenes/inicio.png' %}" alt="Inicio"></a>
+    <a href="#" data-bs-toggle="modal" data-bs-target="#perfilModal">
+        <img title="Perfil" class="icono" src="{% static 'imagenes/usuario.png' %}" alt="Perfil">
+    </a>
+</nav>
+

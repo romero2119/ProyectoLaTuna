@@ -1,0 +1,158 @@
+/* ═══════════════════════════════════
+   SECCIÓN
+═══════════════════════════════════ */
+.menu-seccion {
+  margin-bottom: 50px;
+}
+
+.menu-seccion-titulo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #2e8b57;
+  margin-bottom: 20px;
+  padding-bottom: 8px;
+  border-bottom: 3px solid #2e8b57;
+}
+
+/* ═══════════════════════════════════
+   GRID
+═══════════════════════════════════ */
+.menu-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 24px;
+}
+
+/* ═══════════════════════════════════
+   TARJETA
+═══════════════════════════════════ */
+.menu-card {
+  position: relative;
+  height: 280px;
+  border-radius: 18px;
+  overflow: hidden;
+  cursor: pointer;
+  background-image: var(--bg, none);
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  transition: transform 0.3s, box-shadow 0.3s;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.menu-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+}
+
+/* OVERLAY */
+.menu-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0,0,0,0.05) 0%,
+    rgba(0,0,0,0.65) 100%
+  );
+  z-index: 1;
+}
+
+/* ÍCONO */
+.menu-card-icono {
+  position: relative;
+  z-index: 2;
+  align-self: flex-end;
+  margin: 14px 14px 0 0;
+  background: rgba(255,255,255,0.2);
+  backdrop-filter: blur(6px);
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* INFO */
+.menu-card-info {
+  position: relative;
+  z-index: 2;
+  padding: 16px 18px;
+  color: white;
+}
+
+.menu-card-nombre {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0 0 4px;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+
+.menu-card-descripcion {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.85);
+  margin: 0 0 8px;
+  line-height: 1.4;
+}
+
+.menu-card-precio {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #ffd700;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+/* BADGES STOCK */
+.menu-card-stock {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.stock-ok      { background: rgba(40,167,69,0.85);   color: white; }
+.stock-bajo    { background: rgba(255,193,7,0.85);   color: #333;  }
+.stock-critico { background: rgba(220,53,69,0.85);   color: white; }
+.stock-agotado { background: rgba(108,117,125,0.85); color: white; }
+
+/* ═══════════════════════════════════
+   SEPARADOR
+═══════════════════════════════════ */
+.menu-separador {
+  text-align: center;
+  margin: 10px 0 40px;
+  font-size: 2rem;
+  opacity: 0.4;
+}
+
+
+/* ═══════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════ */
+@media (max-width: 992px) {
+  .menu-cards {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  .menu-card { height: 240px; }
+}
+
+@media (max-width: 600px) {
+  .menu-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .menu-card          { height: 200px; }
+  .menu-card-nombre   { font-size: 1rem; }
+  .menu-seccion-titulo { font-size: 1.2rem; }
+}
+
+@media (max-width: 380px) {
+  .menu-cards { grid-template-columns: 1fr; }
+  .menu-card  { height: 220px; }
+}

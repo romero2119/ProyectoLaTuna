@@ -1,0 +1,49 @@
+{% extends "main.html" %}
+{% load static %}
+{% block Contenido %}
+<div class="tabla-wrapper">
+  <form method="GET" class="mb-3 d-flex gap-2 align-items-center">
+    <input type="text" name="buscar" placeholder="Buscar por numero de mesa" value="{{ request.GET.buscar }}"
+      class="form-control" style="width: 300px;">
+    <button type="submit" title="Buscar" class="btn btn-primary">
+      Buscar
+    </button>
+
+    <div style="margin-left: auto; display:flex; align-items: center; gap:10px;">
+      <a href="{{crear_url}}" class="btn btn-success btn-xs">
+        <i class="fas fa-plus"></i> Crear nueva mesa
+      </a>
+    </div>
+  </form>
+  
+
+  <table class="tabla" id="tabla">
+    <thead>
+      <tr>
+        <th scope="col">id_mesa</th>
+        <th scope="col">numero_mesa</th>
+        <th scope="col">estado</th>
+        <th scope="col">Editar</th>
+        <th scope="col">Eliminar</th>
+      </tr>
+    </thead>
+    <tbody>
+
+      {% for c in object_list %}
+      <tr>
+        <td>{{ c.id_mesa }}</td>
+        <td>{{ c.numero_mesa }}</td>
+        <td>{{ c.estado }}</td>
+        <td>
+          <a href="{% url 'app:editar_mesa' c.id_mesa %}" title="Editar" class="btn btn-primary btn-xs"><i class="fas fa-edit"></i></a>
+        </td>
+        <td>
+          <a href="{% url 'app:eliminar_mesa' c.id_mesa %}" title="Eliminar" class="btn btn-danger btn-xs"><i
+              class="fas fa-trash"></i></a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

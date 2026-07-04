@@ -1,0 +1,93 @@
+{% load static %}
+{% load widget_tweaks %}
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Taquería La Tuna</title>
+
+    <link rel="stylesheet" href="{% static 'css/loginstyle.css' %}">
+
+    <!-- Remix Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
+    <!-- SweetAlert -->
+    <script src="{% static 'lib/sweetalert2/sweetalert2.all.min.js' %}"></script>
+
+</head>
+
+<body>
+
+<div class="contenedor">
+
+    <div class="banner">
+        TAQUERÍA LA TUNA
+    </div>
+
+    <div class="abaner"></div>
+
+    <div class="login">
+
+        <img src="{% static 'imagenes/Logo.png' %}" class="logo" alt="Logo" title="Logo">
+
+        <h2>Inicio de Sesión</h2>
+
+        <form method="post">
+
+            {% csrf_token %}
+
+            <!-- Usuario -->
+            <div class="input-group">
+
+                {{ form.username|add_class:"form-control"|attr:"autocomplete:off"|attr:"placeholder:Usuario" }}
+
+                <i class="ri-user-3-line input-icon"></i>
+
+            </div>
+
+            <!-- Contraseña -->
+            <div class="input-group password-group">
+
+                {{ form.password|add_class:"form-control password-input"|attr:"autocomplete:off"|attr:"placeholder:Contraseña" }}
+
+                <button type="button" class="toggle-password" title="Mostrar/ocultar contraseña">
+
+                    <i class="ri-eye-line"></i>
+
+                </button>
+
+            </div>
+
+            <a href="{% url 'login:password_reset' %}" class="link" title="Recuperar contraseña">
+                ¿Olvidaste tu contraseña?
+            </a>
+
+            <button  type="submit" title="Iniciar sesión" class="btn btn-primary">
+                Entrar
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% if form.errors %}
+<script>
+
+Swal.fire({
+    icon:'error',
+    title:'Error',
+    text:'Usuario o contraseña incorrectos.'
+});
+
+</script>
+{% endif %}
+
+<script src="{% static 'js/login.js' %}"></script>
+
+</body>
+</html>

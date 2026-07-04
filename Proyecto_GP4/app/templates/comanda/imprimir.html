@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <!-- Título de la pestaña del navegador, muestra el número de comanda -->
+    <title>Comanda #{{ comanda.id_comanda }}</title>
+    <style>
+        /* Reset general: quita márgenes y padding por defecto de todos los elementos */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* Fuente estilo ticket de caja (monoespaciada), con padding general a la página */
+        body { font-family: 'Courier New', monospace; padding: 20px; }
+
+        /* Contenedor principal del ticket:
+           - max-width: 400px → ancho máximo (ideal para impresoras de ticket 80mm)
+           - margin: 0 auto  → centrado horizontal
+           - border dashed   → borde punteado estilo ticket físico */
+        .ticket {
+            max-width: 400px;
+            margin: 0 auto;
+            border: 2px dashed #333;
+            padding: 20px;
+        }
+
+        /* Encabezado del ticket: nombre del restaurante y fecha
+           Separado del resto por una línea punteada inferior */
+        .encabezado {
+            text-align: center;
+            border-bottom: 2px dashed #333;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+
+        /* Tamaño del nombre del restaurante */
+        .encabezado h1 { font-size: 24px; font-weight: bold; }
+
+        /* Tamaño de la fecha/hora debajo del nombre */
+        .encabezado p  { font-size: 13px; color: #555; margin-top: 4px; }
+
+        /* Fila de información (ej: "Mesa: 4")
+           Usa flexbox para poner la etiqueta a la izquierda y el valor a la derecha */
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        /* Sección de platos o productos:
+           Separada visualmente con una línea punteada superior */
+        .seccion {
+            margin: 15px 0;
+            border-top: 1px dashed #999;
+            padding-top: 10px;
+        }
+
+        /* Título de cada sección (ej: "PLATOS", "PRODUCTOS")
+           En mayúsculas y color gris para que se diferencie */
+        .seccion h3 {
+            font-size: 13px;
+            text-transform: uppercase;
+            color: #777;
+            margin-bottom: 8px;
+        }
+
+        /* Cada ítem dentro de la sección (nombre del plato a la izquierda, cantidad a la derecha) */
+        .item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        /* Pie de página del ticket con mensaje de despedida */
+        .pie {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #888;
+            border-top: 1px dashed #999;
+            padding-top: 10px;
+        }
+
+        /* Al imprimir:
+           - .no-print se oculta (botones de imprimir y volver no aparecen en papel)
+           - Se quita el padding del body para aprovechar el papel al máximo */
+        @media print {
+            .no-print { display: none !important; }
+            body { padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===================== TICKET ===================== -->
+<div class="ticket">
+
+    <!-- ENCABEZADO: nombre del restaurante y fecha/hora actual -->
+    <div class="encabezado">
+        <!-- Cambia "LA TUNA" por el nombre de tu restaurante -->
+        <h1> LA TUNA </h1>
+        <!-- genera automáticamente la fecha y hora actual del servidor -->
+        <p>{% now "d/m/Y H:i:s" %}</p>
+    </div>
+
+    <!-- INFO GENERAL: datos del pedido -->
+    <!-- Cada .info-row muestra una etiqueta a la izquierda y su valor a la derecha -->
+
+    <div class="info-row">
+        <span><strong>Comanda #:</strong></span>
+        <!-- ID único de la comanda en la base de datos -->
+        <span>{{ comanda.id_comanda }}</span>
+    </div>
+
+    <div class="info-row">
+        <span><strong>Mesa:</strong></span>
+        <!-- Número de mesa relacionado al pedido de esta comanda -->
+        <span>Mesa {{ comanda.pedido.mesa.numero_mesa }}</span>
+    </div>
+
+    <div class="info-row">
+        <span><strong>Empleado:</strong></span>
+        <!-- Usuario que registró el pedido -->
+        <span>{{ comanda.pedido.usuario }}</span>
+    </div>
+
+    <div class="info-row">
+        <span><strong>Estado:</strong></span>
+        <!-- Estado actual de la comanda (ej: Preparación, Listo, Entregado) -->
+        <span>{{ comanda.estado }}</span>
+    </div>
+
+    <div class="info-row">
+        <span><strong>Fecha:</strong></span>
+        <!-- Fecha y hora en que se registró la comanda, formateada -->
+        <span>{{ comanda.fecha_hora|date:"d/m/Y H:i" }}</span>
+    </div>
+
+    <!-- ===== SECCIÓN DE PLATOS ===== -->
+    <div class="seccion">
+        <h3> Platos</h3>
+
+        <!-- Recorre todos los platos del pedido asociado a esta comanda -->
+        {% for d in comanda.pedido.detalle_platos.all %}
+        <div class="item">
+            <!-- Nombre del plato a la izquierda -->
+            <span>{{ d.plato.nombre }}</span>
+            <!-- Cantidad pedida a la derecha -->
+            <span>x{{ d.cantidad }}</span>
+        </div>
+        {% empty %}
+        <!-- Si no hay platos registrados, muestra este mensaje -->
+        <p style="font-size:13px; color:#999;">Sin platos</p>
+        {% endfor %}
+    </div>
+
+    <!-- ===== SECCIÓN DE PRODUCTOS ===== -->
+    <div class="seccion">
+        <h3>Productos</h3>
+
+        <!-- Recorre todos los productos del pedido asociado a esta comanda -->
+        {% for d in comanda.pedido.detalle_productos.all %}
+        <div class="item">
+            <!-- Nombre del producto a la izquierda -->
+            <span>{{ d.producto.descripcion }}</span>
+            <!-- Cantidad pedida a la derecha -->
+            <span>x{{ d.cantidad }}</span>
+        </div>
+        {% empty %}
+        <!-- Si no hay productos registrados, muestra este mensaje -->
+        <p style="font-size:13px; color:#999;">Sin productos</p>
+        {% endfor %}
+    </div>
+
+</div>
+<!-- =================== FIN TICKET =================== -->
+
+
+<!-- ===== BOTONES (solo visibles en pantalla, NO se imprimen) ===== -->
+<div class="no-print" style="text-align:center; margin-top:20px;">
+
+    <!-- Botón verde: abre el diálogo de impresión del navegador -->
+    <button onclick="window.print()" 
+            style="padding:12px 40px; font-size:16px; background:#28a745; color:white; border:none; border-radius:8px; cursor:pointer;">
+        Imprimir
+    </button>
+
+    <!-- Botón gris: regresa a la página anterior (listar comandas) -->
+    <a href="javascript:history.back()" 
+       style="display:inline-block; margin-left:10px; padding:12px 30px; font-size:16px; background:#6c757d; color:white; border-radius:8px; text-decoration:none;">
+        ← Volver
+    </a>
+</div>
+
+<!-- ===== SCRIPT: abre el diálogo de impresión automáticamente al cargar la página =====
+     Si NO quieres que se abra solo, elimina o comenta este bloque <script> -->
+<script>
+    window.onload = function() {
+        window.print();
+    };
+</script>
+
+</body>
+</html>

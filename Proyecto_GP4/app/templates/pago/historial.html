@@ -1,0 +1,134 @@
+{% extends 'main.html' %}
+{% load static %}
+
+{% block Contenido %}
+
+<div style="margin-bottom:15px; display:flex; justify-content:flex-end;">
+    <a href="{% url 'app:listar_pagos' %}" class="btn btn-secondary btn-xs">
+        <i class="fas fa-arrow-left"></i> Volver al listado
+    </a>
+</div>
+<div class="card shadow-sm mb-1">
+    <div class="card-body d-flex align-items-center gap-3">
+
+        <h6 class="mb-0">
+            <i class="fas fa-filter"></i> Filtrar ventas
+        </h6>
+
+        <form method="get" class="d-flex align-items-center gap-2">
+
+            <input 
+                type="month" 
+                name="mes" 
+                value="{{ mes_seleccionado }}"
+                class="form-control form-control-sm"
+                style="max-width: 80px;"
+            >
+
+            <button type="submit"  title="Filtrar" class="btn btn-success btn-sm">
+                <i class="fas fa-check"></i>
+            </button>
+
+            <a href="{% url 'app:historial_ventas' %}" class="btn btn-outline-danger btn-sm" title="Limpiar filtros">
+                <i class="fas fa-trash"></i>
+            </a>
+
+        </form>
+
+    </div>
+</div>
+
+{% if historial %}
+<div id="acordeon-pagos">
+    {% for mes, pagos in historial.items %}
+    <div class="card shadow-sm mb-2">
+        <div class="card-header bg-primary text-white" style="cursor:pointer;"
+            data-toggle="collapse" data-target="#mes-pago-{{ forloop.counter }}">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h5 style="margin:0;">
+                    <i class="fas fa-calendar-alt"></i> {{ mes }}
+                </h5>
+                <span class="badge badge-light">{{ pagos|length }} pagos</span>
+            </div>
+        </div>
+        <div id="mes-pago-{{ forloop.counter }}" class="collapse {% if forloop.first %}show{% endif %}">
+            <div class="card-body p-0">
+                <table class="tabla table table-bordered mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>Código</th>
+                            <th>Venta</th>
+                            <th>Monto</th>
+                            <th>Método</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in pagos %}
+                        <tr {% if not p.activo %}class="fila-inactiva"{% endif %}>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ p.codigo }}</td>
+                            <td>{{ p.venta.codigo }}</td>
+                            <td>${{ p.monto }}</td>
+                            <td>{{ p.metodo_pago }}</td>
+                            <td>{{ p.fecha|date:'Y-m-d H:i' }}</td>
+                            <td>
+                                {% if p.activo %}
+                                    <span  class="badge badge-success" title="Activo">Activo</span>
+                                {% else %}
+                                    <span class="badge badge-secondary" title="Inactivo">Inactivo</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info text-center">
+    <i class="fas fa-info-circle"></i> No hay pagos registrados aún.
+</div>
+{% endif %}
+<!-- PAGINACIÓN -->
+{% if is_paginated %}
+<div style="display:flex; justify-content:center; margin-top:15px; gap:5px;">
+
+  {% if page_obj.has_previous %}
+    <a href="?page=1" class="btn btn-secondary btn-xs">« Primera</a>
+    <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary btn-xs">‹ Anterior</a>
+  {% endif %}
+
+  {% for num in paginator.page_range %}
+    {% if page_obj.number == num %}
+      <span class="btn btn-primary btn-xs" title="Página {{ num }}"> {{ num }}</span>
+    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+      <a href="?page={{ num }}" class="btn btn-secondary btn-xs" title="Página {{ num }}"> {{ num }}</a>
+    {% endif %}
+  {% endfor %}
+
+  {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary btn-xs" title="Página siguiente">Siguiente ›</a>
+    <a href="?page={{ paginator.num_pages }}" class="btn btn-secondary btn-xs" title="Última página">Última »</a>
+  {% endif %}
+
+</div>
+<div style="text-align:center; margin-top:8px; color:#888; font-size:0.85em;">
+  Página {{ page_obj.number }} de {{ paginator.num_pages }} — {{ paginator.count }} registros en total
+</div>
+{% endif %}
+<style>
+    .fila-inactiva {
+        background-color: #000000 !important;
+        opacity: 0.75;
+        text-decoration: line-through;
+        color: rgb(0, 0, 0);
+    }
+</style>
+
+{% endblock %}

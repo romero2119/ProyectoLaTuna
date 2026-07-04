@@ -1,0 +1,203 @@
+{% extends 'main.html' %}
+{% load static %}
+
+{% block Contenido %}
+<div class="tabla-wrapper">
+  <div style="margin-bottom: 10px; color: #888; font-size: 0.85em;">
+    <i class="fas fa-calendar-alt"></i>
+    Mostrando pagos de: <strong>{{ mes_actual }}</strong>
+  </div>
+
+  <!-- FILTROS -->
+  <div style="margin-bottom:15px;">
+    <form method="GET" style="display:flex; gap:10px;">
+      <input type="text" name="usuario" placeholder="Buscar por ventas" value="{{ usuario }}">
+      <input type="date" name="fecha" value="{{ fecha }}">
+      <button type="submit" title="Buscar" class="btn btn-primary btn-xs">
+        <i class="fas fa-search"></i> Buscar
+      </button>
+
+      <div style="margin-left: auto; display:flex; align-items: center; gap:10px;">
+        <a href="{% url 'app:reporte_pagos_pdf' %}"  title="Exportar PDF" class="btn btn-danger btn-xs btn-exportar">
+          <i class="fas fa-file-pdf"></i> Exportar PDF
+        </a>
+        <a href="{% url 'app:reporte_pagos_excel' %}" title="Exportar Excel" class="btn btn-success btn-xs btn-exportar">
+          <i class="fas fa-file-excel"></i> Exportar Excel
+        </a>
+        <a href="{% url 'app:historial_pagos' %}" class="btn btn-info btn-xs">
+          <i class="fas fa-history"></i> Historial
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <div class="tabla-wrapper">
+    <table class="tabla" id="tabla">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Venta</th>
+          <th>Factura</th>
+          <th>Total Venta</th>
+          <th>Monto Pagado</th>
+          <th>Fecha</th>
+          <th>Método de Pago</th>
+          <th>Estado</th>
+          <th>Generar Factura</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in object_list %}
+        <tr {% if not p.activo %}class="fila-inactiva" {% endif %}>
+          <td>{{ p.id_pago }}</td>
+          <td>
+            {% if p.venta %}Venta #{{ p.venta.id_venta }}{% else %}Sin venta{% endif %}
+          </td>
+
+          <td>
+            {% if p.factura %}
+            <a href="{% url 'app:detalle_factura' p.factura %}" class="badge badge-success text-dark"
+              style="text-decoration:none;">
+              <i class="fas fa-file-invoice"></i> #{{ p.factura }}
+            </a>
+            {% else %}
+            <span class="badge badge-warning text-dark">Sin factura</span>
+            {% endif %}
+          </td>
+
+          <td>
+            {% if p.venta %}${{ p.venta.total }}{% else %}$0{% endif %}
+          </td>
+          <td>${{ p.monto }}</td>
+          <td>{{ p.fecha|date:'Y-m-d H:i' }}</td>
+          <td>{{ p.metodo_pago }}</td>
+
+          <td>
+            {% if p.activo %}
+            <span class="badge badge-success text-dark">Activo</span>
+            {% else %}
+            <span class="badge badge-secondary text-dark">Inactivo</span>
+            {% endif %}
+          </td>
+
+          <td>
+            {% if not p.activo %}
+            <span class="btn btn-secondary btn-xs" style="cursor:not-allowed; opacity:0.6;" title="Pago inactivo">
+              Bloqueado
+            </span>
+            {% elif p.factura %}
+            <span class="btn btn-secondary btn-xs" title="Facturada">
+              <i class="fas fa-check"></i> Facturada
+            </span>
+            {% else %}
+            <a href="{% url 'app:crear_factura' p.id_pago %}" class="btn btn-success btn-xs" title="Crear Factura">
+              <i class="fas fa-file-invoice"></i> Facturar
+            </a>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9" style="text-align:center;">No hay pagos registrados</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PAGINACIÓN -->
+  {% if is_paginated %}
+  <div style="display:flex; justify-content:center; margin-top:15px; gap:5px;">
+    {% if page_obj.has_previous %}
+    <a href="?page=1" class="btn btn-secondary btn-xs" title="Primera página">« Primera</a>
+    <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary btn-xs" title="Página anterior">‹ Anterior</a>
+    {% endif %}
+
+    {% for num in paginator.page_range %}
+    {% if page_obj.number == num %}
+    <span class="btn btn-primary btn-xs">{{ num }}</span>
+    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %} <a href="?page={{ num }}"
+      class="btn btn-secondary btn-xs" title="Página {{ num }}"> {{ num }}</a>
+      {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary btn-xs" title="Página siguiente">Siguiente ›</a>
+      <a href="?page={{ paginator.num_pages }}" class="btn btn-secondary btn-xs" title="Última página">Última »</a>
+      {% endif %}
+  </div>
+  <div style="text-align:center; margin-top:8px; color:#888; font-size:0.85em;">
+    Página {{ page_obj.number }} de {{ paginator.num_pages }} — {{ paginator.count }} registros en total
+  </div>
+  {% endif %}
+
+
+  <style>
+    .fila-inactiva {
+      background-color: #f0f0f0 !important;
+      opacity: 0.75;
+      text-decoration: line-through;
+      color: #888;
+    }
+  </style>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+
+
+    {% if messages %}
+    {% for message in messages %}
+    Swal.fire({
+      icon: '{% if message.tags == "success" %}success{% elif message.tags == "error" %}error{% elif message.tags == "warning" %}warning{% else %}info{% endif %}',
+      title: '{% if message.tags == "success" %}Éxito{% elif message.tags == "error" %}Error{% elif message.tags == "warning" %}Advertencia{% else %}Info{% endif %}',
+      text: '{{ message|escapejs }}',
+      confirmButtonColor: '{% if message.tags == "success" %}#43a047{% else %}#e53935{% endif %}',
+      confirmButtonText: 'Aceptar',
+      timer: 3000,
+      timerProgressBar: true
+    });
+    {% endfor %}
+    {% endif %}
+
+    function mostrarAlerta(mensaje) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Sin resultados',
+        text: mensaje,
+        confirmButtonColor: '#e53935',
+        confirmButtonText: 'Entendido',
+        allowOutsideClick: false
+      });
+    }
+
+
+    document.querySelectorAll('.btn-exportar').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        const hayPagos = {{ object_list|length|default:0 }} > 0;
+
+    if (!hayPagos) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      const filtroUsuario = "{{ request.GET.usuario|escapejs }}";
+      const filtroFecha = "{{ request.GET.fecha|escapejs }}";
+
+      let mensaje = "No hay pagos para exportar.";
+
+      if (filtroUsuario && filtroFecha) {
+        mensaje = `No se encontraron pagos del usuario "${filtroUsuario}" en la fecha ${filtroFecha}.`;
+      } else if (filtroUsuario) {
+        mensaje = `No se encontraron pagos del usuario "${filtroUsuario}".`;
+      } else if (filtroFecha) {
+        mensaje = `No se encontraron pagos para la fecha ${filtroFecha}.`;
+      }
+
+      mostrarAlerta(mensaje);
+    }
+  });
+    });
+
+});
+</script>
+
+{% endblock %}

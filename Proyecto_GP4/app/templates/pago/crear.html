@@ -1,0 +1,391 @@
+{% extends "main.html" %}
+{% load static %}
+
+{% block Contenido %}
+
+<div class="card shadow-sm">
+    <div class="card-header bg-success text-white">
+        <h3 class="card-title" style="margin:0;">
+            <i class="fas fa-cash-register"></i> Registrar Pago
+        </h3>
+    </div>
+
+    <div class="card-body">
+
+        <!-- INFO DE LA VENTA -->
+        <div class="alert alert-info">
+            <div class="row">
+                <div class="col-md-6">
+                    <i class="fas fa-shopping-cart"></i>
+                    <strong>Venta:</strong> {{ venta.codigo }}
+                </div>
+                <div class="col-md-6">
+                    <i class="fas fa-dollar-sign"></i>
+                    <strong>Total a pagar:</strong> $<span id="total-venta">{{ venta.total }}</span>
+                </div>
+            </div>
+        </div>
+
+        <form method="POST" id="form-pago" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <!-- MÉTODO DE PAGO -->
+            <div class="form-group">
+                <label for="metodo_pago"><strong>Método de pago:</strong></label>
+                <select id="metodo_pago" name="metodo_pago" class="form-control" required>
+                    <option value="">— Seleccione un método —</option>
+                    <option value="Efectivo"> Efectivo</option>
+                    <option value="Transferencia"> Transferencia</option>
+                </select>
+            </div>
+
+            <!-- SECCIÓN EFECTIVO -->
+            <div id="seccion-efectivo" style="display:none; margin-top:15px;">
+                <div class="form-group">
+                    <label for="monto_recibido"><strong>¿Con cuánto paga el cliente?</strong></label>
+                    <input 
+                        type="number" 
+                        id="monto_recibido" 
+                        name="monto_recibido"
+                        class="form-control" 
+                        placeholder="Ingrese el monto recibido"
+                        min="{{ venta.total }}"
+                        step="100"
+                    >
+                </div>
+                <div id="resultado-vueltas" style="display:none; margin-top:10px;">
+                    <div class="alert" id="alerta-vueltas">
+                        <strong> $ Vueltas a entregar:</strong>
+                        <span id="valor-vueltas" style="font-size:1.2em; font-weight:bold;"></span>
+                    </div>
+                </div>
+                <div id="alerta-insuficiente" style="display:none; margin-top:10px;">
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>El monto ingresado es menor al total a pagar.</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCION TRANSFERENCIA -->
+            <div id="seccion-transferencia" style="display:none; margin-top:15px;">
+                <div class="alert alert-warning">
+                    <i class="fas fa-university"></i>
+                    <strong>Datos de la Transferencia</strong>
+                </div>
+                <div class="form-group">
+                    <label><strong>Plataforma de transferencia:</strong></label>
+                    <div class="d-flex" style="gap:15px; flex-wrap:wrap;">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="plataforma_transferencia" id="nequi" value="Nequi">
+                            <label class="form-check-label" for="nequi">
+                                <img src="{% static 'imagenes/nequi.png' %}" style="height:30px; vertical-align:middle;"> Nequi
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline" style="margin-left:20px;">
+                            <input class="form-check-input" type="radio" name="plataforma_transferencia" id="bancolombia" value="Bancolombia">
+                            <label class="form-check-label" for="bancolombia">
+                                <img src="{% static 'imagenes/bancolombia.png' %}" style="height:30px; vertical-align:middle;"> Bancolombia
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline" style="margin-left:20px;">
+                            <input class="form-check-input" type="radio" name="plataforma_transferencia" id="daviplata" value="Daviplata">
+                            <label class="form-check-label" for="daviplata">
+                                <img src="{% static 'imagenes/daviplata.png' %}" style="height:30px; vertical-align:middle;"> Daviplata
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BOTÓN PARA ABRIR MODAL COMPROBANTE -->
+                <button type="button" class="btn btn-info btn-xs" id="btn-comprobante" style="margin-top:10px; display:none;" title="Adjuntar Comprobante">
+                    <i class="fas fa-upload"></i> Adjuntar Comprobante
+                </button>
+
+                <!-- VISTA PREVIA DEL COMPROBANTE -->
+                <div id="preview-comprobante" style="display:none; margin-top:10px;">
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i>
+                        <strong>Comprobante adjuntado:</strong>
+                        <span id="nombre-comprobante"></span>
+                        <br>
+                        <strong>Referencia:</strong>
+                        <span id="texto-referencia"></span>
+                    </div>
+                    <img id="img-preview" src="" style="max-width:200px; border-radius:8px; margin-top:5px;">
+                </div>
+
+                <!-- Campos ocultos que se llenan desde el modal -->
+                <input type="hidden" name="referencia_transferencia" id="campo-referencia">
+                <input type="file" name="comprobante" id="campo-comprobante" style="display:none;" accept="image/*">
+            </div>
+
+            <div class="card-footer text-right" style="margin-top:20px; padding:0;">
+                <button type="submit" class="btn btn-success btn-xs" id="btn-registrar" title="Registrar Pago">
+                    <i class="fas fa-save"></i> Registrar Pago
+                </button>
+                <a href="{% url 'app:listar_ventas' %}" title="Cancelar" class="btn btn-danger btn-xs">
+                    <i class="fas fa-times"></i> Cancelar
+                </a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<!-- MODAL COMPROBANTE -->
+<div class="modal fade" id="modal-comprobante" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-upload"></i> Adjuntar Comprobante
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label><strong>Número de referencia:</strong></label>
+                    <input type="text" id="input-referencia" class="form-control"
+                        placeholder="Ej: 123456789">
+                    <small class="text-muted">Ingresa el número de referencia de la transferencia.</small>
+                </div>
+                <div class="form-group">
+                    <label><strong>Imagen del comprobante:</strong></label>
+                    <div id="zona-comprobante" class="border p-4 text-center rounded"
+                        style="cursor:pointer; border-style:dashed !important; border-color:#17a2b8;">
+                        <i class="fas fa-cloud-upload-alt text-info" style="font-size:2.5rem;"></i>
+                        <p class="mt-2 mb-0"><strong>Arrastra la imagen aquí</strong></p>
+                        <p class="small text-muted">o haz clic para seleccionar</p>
+                        <input type="file" id="input-imagen-modal" accept="image/*" style="display:none;">
+                    </div>
+                    <div id="modal-preview" style="display:none; margin-top:10px; text-align:center;">
+                        <img id="modal-img" src="" style="max-width:100%; border-radius:8px;">
+                        <p class="text-success mt-1"><i class="fas fa-check"></i> <span id="modal-nombre-archivo"></span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-xs" data-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-info btn-xs" id="btn-confirmar-comprobante">
+                    <i class="fas fa-check"></i> Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const total = parseFloat({{ venta.total }});
+    const selectMetodo = document.getElementById('metodo_pago');
+    const seccionEfectivo = document.getElementById('seccion-efectivo');
+    const seccionTransferencia = document.getElementById('seccion-transferencia');
+    const montoRecibido = document.getElementById('monto_recibido');
+    const resultadoVueltas = document.getElementById('resultado-vueltas');
+    const valorVueltas = document.getElementById('valor-vueltas');
+    const alertaVueltas = document.getElementById('alerta-vueltas');
+    const alertaInsuficiente = document.getElementById('alerta-insuficiente');
+    const btnRegistrar = document.getElementById('btn-registrar');
+    const radiosTransferencia = document.querySelectorAll('input[name="plataforma_transferencia"]');
+    const btnComprobante = document.getElementById('btn-comprobante');
+
+    // Mostrar botón comprobante al escoger plataforma
+    radiosTransferencia.forEach(radio => {
+        radio.addEventListener('change', () => {
+            btnComprobante.style.display = 'inline-block';
+        });
+    });
+
+    // Mostrar sección según método
+    selectMetodo.addEventListener('change', function() {
+        seccionEfectivo.style.display = 'none';
+        seccionTransferencia.style.display = 'none';
+        montoRecibido.required = false;
+        resultadoVueltas.style.display = 'none';
+        alertaInsuficiente.style.display = 'none';
+        btnRegistrar.disabled = false;
+
+        if (this.value === 'Efectivo') {
+            seccionEfectivo.style.display = 'block';
+            montoRecibido.required = true;
+        } else if (this.value === 'Transferencia') {
+            seccionTransferencia.style.display = 'block';
+        }
+    });
+
+    // Calcular vueltas
+    montoRecibido.addEventListener('input', function() {
+        const recibido = parseFloat(this.value);
+        if (isNaN(recibido) || this.value === '') {
+            resultadoVueltas.style.display = 'none';
+            alertaInsuficiente.style.display = 'none';
+            btnRegistrar.disabled = false;
+            return;
+        }
+        const vueltas = recibido - total;
+        if (vueltas < 0) {
+            resultadoVueltas.style.display = 'none';
+            alertaInsuficiente.style.display = 'block';
+            btnRegistrar.disabled = true;
+        } else if (vueltas === 0) {
+            alertaInsuficiente.style.display = 'none';
+            resultadoVueltas.style.display = 'block';
+            alertaVueltas.className = 'alert alert-success';
+            valorVueltas.textContent = '$0 — Pago exacto ✅';
+            btnRegistrar.disabled = false;
+        } else {
+            alertaInsuficiente.style.display = 'none';
+            resultadoVueltas.style.display = 'block';
+            alertaVueltas.className = 'alert alert-info';
+            valorVueltas.textContent = '$' + vueltas.toLocaleString('es-CO');
+            btnRegistrar.disabled = false;
+        }
+    });
+
+    // Abrir modal comprobante
+    btnComprobante.addEventListener('click', function() {
+        $('#modal-comprobante').modal('show');
+    });
+
+    // Drag and drop en zona del modal
+    const zonaComprobante = document.getElementById('zona-comprobante');
+    const inputImagenModal = document.getElementById('input-imagen-modal');
+    const modalPreview = document.getElementById('modal-preview');
+    const modalImg = document.getElementById('modal-img');
+    const modalNombreArchivo = document.getElementById('modal-nombre-archivo');
+
+    zonaComprobante.addEventListener('click', () => inputImagenModal.click());
+
+    zonaComprobante.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        zonaComprobante.style.backgroundColor = '#d1ecf1';
+    });
+
+    zonaComprobante.addEventListener('dragleave', () => {
+        zonaComprobante.style.backgroundColor = '';
+    });
+
+    zonaComprobante.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zonaComprobante.style.backgroundColor = '';
+        const archivo = e.dataTransfer.files[0];
+        if (archivo) mostrarPreviewModal(archivo);
+    });
+
+    inputImagenModal.addEventListener('change', function() {
+        if (this.files[0]) mostrarPreviewModal(this.files[0]);
+    });
+
+    function mostrarPreviewModal(archivo) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            modalImg.src = e.target.result;
+            modalNombreArchivo.textContent = archivo.name;
+            modalPreview.style.display = 'block';
+        };
+        reader.readAsDataURL(archivo);
+    }
+
+    // Confirmar comprobante desde el modal
+    document.getElementById('btn-confirmar-comprobante').addEventListener('click', function() {
+        const referencia = document.getElementById('input-referencia').value.trim();
+        const archivo = inputImagenModal.files[0];
+
+        if (!referencia) {
+            Swal.fire({
+                icon: 'warning',
+                title: '⚠️ Campo requerido',
+                text: 'Debes ingresar el número de referencia.',
+                confirmButtonColor: '#e53935',
+                confirmButtonText: 'Entendido'
+            });
+            return;
+        }
+
+        document.getElementById('campo-referencia').value = referencia;
+
+        if (archivo) {
+            const dt = new DataTransfer();
+            dt.items.add(archivo);
+            document.getElementById('campo-comprobante').files = dt.files;
+        }
+
+        document.getElementById('nombre-comprobante').textContent = archivo ? archivo.name : 'Sin imagen';
+        document.getElementById('texto-referencia').textContent = referencia;
+        document.getElementById('preview-comprobante').style.display = 'block';
+
+        if (archivo) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('img-preview').src = e.target.result;
+            };
+            reader.readAsDataURL(archivo);
+        }
+
+        $('#modal-comprobante').modal('hide');
+
+        Swal.fire({
+            icon: 'success',
+            title: '✅ Comprobante adjuntado',
+            text: 'El comprobante fue adjuntado correctamente.',
+            timer: 2000,
+            timerProgressBar: true,
+            showConfirmButton: false
+        });
+    });
+
+    // ✅ VALIDACIÓN AL ENVIAR EL FORM
+    document.getElementById('form-pago').addEventListener('submit', function(e) {
+        const metodo = selectMetodo.value;
+
+        if (metodo === 'Transferencia') {
+            const plataforma = document.querySelector('input[name="plataforma_transferencia"]:checked');
+
+            if (!plataforma) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                    title: '⚠️ Plataforma requerida',
+                    text: 'Debes seleccionar una plataforma de transferencia (Nequi, Bancolombia o Daviplata).',
+                    confirmButtonColor: '#e53935',
+                    confirmButtonText: 'Entendido'
+                });
+                return;
+            }
+
+            const referencia = document.getElementById('campo-referencia').value.trim();
+            if (!referencia) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                    title: '⚠️ Comprobante requerido',
+                    text: 'Debes adjuntar el comprobante con su número de referencia antes de registrar el pago.',
+                    confirmButtonColor: '#e53935',
+                    confirmButtonText: 'Entendido'
+                });
+                return;
+            }
+        }
+    });
+
+    // Alertas messages
+    {% if messages %}
+        {% for message in messages %}
+        Swal.fire({
+            icon: '{% if message.tags == "success" %}success{% elif message.tags == "error" %}error{% elif message.tags == "warning" %}warning{% else %}info{% endif %}',
+            title: '{% if message.tags == "success" %}✅ Éxito{% elif message.tags == "error" %}❌ Error{% elif message.tags == "warning" %}⚠️ Advertencia{% else %}ℹ️ Info{% endif %}',
+            text: '{{ message }}',
+            confirmButtonColor: '{% if message.tags == "success" %}#43a047{% else %}#e53935{% endif %}',
+            confirmButtonText: 'Aceptar',
+            timer: 4000,
+            timerProgressBar: true
+        });
+        {% endfor %}
+    {% endif %}
+</script>
+
+{% endblock %}  

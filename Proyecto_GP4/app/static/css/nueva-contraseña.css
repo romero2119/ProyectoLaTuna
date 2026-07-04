@@ -1,0 +1,556 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Jokerman', cursive;
+}
+
+body{
+
+    background-image:url("../imagenes/fondo.png");
+    background-repeat:no-repeat;
+    background-position:center;
+    background-size:cover;
+
+    min-height:100vh;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    font-family:'Poppins',Arial,sans-serif;
+
+}
+
+/*==========================
+        CONTENEDOR
+==========================*/
+
+.container{
+
+    width:480px;
+    max-width:95%;
+
+}
+
+.form-section{
+
+    background:#FEF8E8;
+
+    border:2px solid #e5c07b;
+
+    border-radius:18px;
+
+    padding:35px;
+
+    text-align:center;
+
+    box-shadow:0 10px 30px rgba(0,0,0,.30);
+
+    animation:fadeIn .8s ease;
+
+}
+
+/*==========================
+            LOGO
+==========================*/
+
+.logo{
+
+    width:110px;
+
+    height:110px;
+
+    border-radius:50%;
+
+    border:4px solid #fc4141;
+
+    object-fit:cover;
+
+    margin-bottom:20px;
+
+    box-shadow:0 0 12px rgba(0,0,0,.25);
+
+    transition:.3s;
+
+}
+
+.logo:hover{
+
+    transform:scale(1.05);
+
+}
+
+/*==========================
+            ICONO
+==========================*/
+
+.icon-header{
+
+    width:90px;
+
+    height:90px;
+
+    margin:0 auto 20px;
+
+    border-radius:50%;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    color:white;
+
+    font-size:40px;
+
+    box-shadow:0 5px 15px rgba(0,0,0,.25);
+
+}
+
+.success{
+
+    background:linear-gradient(135deg,#107E38,#1ca049);
+
+}
+
+.error{
+
+    background:linear-gradient(135deg,#fc4141,#ff7043);
+
+}
+
+/*==========================
+            TITULOS
+==========================*/
+
+h2{
+
+    color:#107E38;
+
+    font-size:18px;
+
+    letter-spacing:1px;
+
+}
+
+h1{
+
+    margin:10px 0 20px;
+
+    color:#fc4141;
+
+    font-size:34px;
+
+    letter-spacing:2px;
+
+}
+
+.instruction-text{
+
+    color:#555;
+
+    line-height:1.6;
+
+    margin-bottom:25px;
+
+}
+
+/*==========================
+            INPUTS
+==========================*/
+
+.input-group{
+
+    text-align:left;
+
+    margin-bottom:20px;
+
+}
+
+.input-group label{
+
+    display:block;
+
+    margin-bottom:8px;
+
+    font-weight:600;
+
+    color:#333;
+
+}
+
+.password-container{
+
+    position:relative;
+
+}
+
+.form-control{
+
+    width:100%;
+
+    padding:13px 45px 13px 15px;
+
+    border-radius:10px;
+
+    border:1px solid #ccc;
+
+    font-size:15px;
+
+    transition:.3s;
+
+}
+
+.form-control:focus{
+
+    outline:none;
+
+    border-color:#107E38;
+
+    box-shadow:0 0 8px rgba(16,126,56,.3);
+
+}
+
+/*==========================
+      MOSTRAR CONTRASEÑA
+==========================*/
+
+.toggle-password{
+
+    position:absolute;
+
+    top:50%;
+
+    right:15px;
+
+    transform:translateY(-50%);
+
+    cursor:pointer;
+
+    color:#888;
+
+    font-size:20px;
+
+    transition:.3s;
+
+}
+
+.toggle-password:hover{
+
+    color:#107E38;
+
+}
+
+/*==========================
+        BARRA SEGURIDAD
+==========================*/
+
+.strength-container{
+
+    margin-top:12px;
+
+}
+
+.strength-bar{
+
+    width:100%;
+
+    height:8px;
+
+    background:#ddd;
+
+    border-radius:20px;
+
+    overflow:hidden;
+
+}
+
+#strength-fill{
+
+    width:0;
+
+    height:100%;
+
+    background:#fc4141;
+
+    transition:.4s;
+
+}
+
+#strength-text{
+
+    display:block;
+
+    margin-top:8px;
+
+    font-size:13px;
+
+    font-weight:bold;
+
+    color:#666;
+
+}
+
+/*==========================
+        REQUISITOS
+==========================*/
+
+.requirements{
+
+    list-style:none;
+
+    margin-top:15px;
+
+}
+
+.requirements li{
+
+    margin:8px 0;
+
+    color:#777;
+
+    font-size:14px;
+
+    transition:.3s;
+
+}
+
+.requirements li i{
+
+    margin-right:8px;
+
+}
+
+.requirements li.valid{
+
+    color:#107E38;
+
+    font-weight:600;
+
+}
+
+/*==========================
+      MENSAJE COINCIDENCIA
+==========================*/
+
+.match-message{
+
+    margin-top:10px;
+
+    font-size:14px;
+
+    font-weight:600;
+
+    color:#777;
+
+}
+
+/*==========================
+          ERRORES
+==========================*/
+
+.error-msg-custom{
+
+    margin-top:10px;
+
+    color:#d62828;
+
+    font-size:13px;
+
+    font-weight:600;
+
+}
+
+/*==========================
+          BOTONES
+==========================*/
+
+button{
+
+    width:100%;
+
+    padding:14px;
+
+    margin-top:20px;
+
+    border:none;
+
+    border-radius:30px;
+
+    background:linear-gradient(90deg,#107E38,#1ca049);
+
+    color:white;
+
+    font-size:15px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+    box-shadow:0 5px 10px rgba(0,0,0,.2);
+
+}
+
+button:hover{
+
+    transform:translateY(-2px);
+
+    background:linear-gradient(90deg,#0b5727,#158a3d);
+
+}
+
+.secondary-button{
+
+    background:linear-gradient(135deg,#858796,#60616f);
+
+}
+
+.secondary-button:hover{
+
+    background:linear-gradient(135deg,#60616f,#4d4d58);
+
+}
+
+/*==========================
+          INFO BOX
+==========================*/
+
+.info-box{
+
+    background:#FFF5D9;
+
+    border-left:5px solid #fc4141;
+
+    border-radius:10px;
+
+    padding:15px;
+
+    margin:20px 0;
+
+    color:#555;
+
+    text-align:left;
+
+    line-height:1.5;
+
+}
+
+.button-link{
+
+    text-decoration:none;
+
+}
+
+/*==========================
+          LINKS
+==========================*/
+
+.login-text{
+
+    margin-top:25px;
+
+}
+
+.login-text a{
+
+    color:#107E38;
+
+    text-decoration:none;
+
+    font-weight:600;
+
+    transition:.3s;
+
+}
+
+.login-text a:hover{
+
+    color:#0b5727;
+
+    text-decoration:underline;
+
+}
+
+/*==========================
+        ANIMACIONES
+==========================*/
+
+@keyframes fadeIn{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(-20px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
+
+}
+
+/*==========================
+        RESPONSIVE
+==========================*/
+
+@media(max-width:480px){
+
+    .form-section{
+
+        padding:25px;
+
+    }
+
+    .logo{
+
+        width:90px;
+
+        height:90px;
+
+    }
+
+    .icon-header{
+
+        width:75px;
+
+        height:75px;
+
+        font-size:34px;
+
+    }
+
+    h1{
+
+        font-size:28px;
+
+    }
+
+    h2{
+
+        font-size:16px;
+
+    }
+
+    .instruction-text{
+
+        font-size:14px;
+
+    }
+
+    .requirements li{
+
+        font-size:13px;
+
+    }
+
+}

@@ -1,0 +1,182 @@
+{% extends 'main.html' %}
+{% load widget_tweaks %}
+
+{% block Contenido %}
+
+<form method="post" action="." id="usuarioForm">
+    <div class="card shadow-sm">
+        <div class="card-header text-white" style="background-color: #000; border-bottom: 2px solid #d2b48c;">
+            <h3 class="card-title">
+                <i class="fas fa-user-plus"></i> {{ titulo }}
+            </h3>
+        </div>
+
+        <div class="card-body">
+            {% csrf_token %}
+
+            {% if user_form.errors or perfil_form.errors %}
+            <div class="alert alert-danger">
+                <h5>Error! Verifica los campos:</h5>
+            </div>
+            {% endif %}
+
+            <div class="row">
+                <!-- IZQUIERDA -->
+                <div class="col-md-6">
+                    <h5 class="text-secondary mb-3">Datos de Acceso</h5>
+
+                    {% for field in user_form.visible_fields %}
+                    <div class="form-group mb-3">
+                        <label>{{ field.label }}:</label>
+
+                        {% if field.name == 'password' %}
+
+                    
+                        <!-- PASSWORD -->
+                        <div class="input-group">
+                            {{ field|add_class:'form-control'|attr:'id:password'|attr:'autocomplete:off' }}
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-outline-secondary" id="btn-ojo">
+                                    <i class="fas fa-eye" id="icono-ojo"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- CONFIRMAR -->
+                        <div class="mt-2">
+                            <label>Confirmar:</label>
+                            <div class="input-group">
+                                <input type="password" id="confirm_password" class="form-control" autocomplete="off" placeholder="Confirme la contraseña">
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-outline-secondary" id="btn-ojo-confirm">
+                                        <i class="fas fa-eye" id="icono-ojo-confirm"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <small id="confirm_error" class="text-danger"></small>
+                        </div>
+
+                        <!-- BARRA -->
+                        <div class="progress mt-2" style="width:200px;">
+                            <div id="password-strength-bar" class="progress-bar" style="width:0%"></div>
+                        </div>
+
+                        <small id="password-text" class="form-text text-muted"></small>
+
+                        {% else %}
+                        {{ field|add_class:'form-control' }}
+                        {% endif %}
+
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- DERECHA -->
+                <div class="col-md-6">
+                    <h5 class="text-secondary mb-3">Información Personal</h5>
+                    {% for field in perfil_form.visible_fields %}
+                    <div class="form-group mb-3">
+                        <label>{{ field.label }}:</label>
+                        {{ field|add_class:'form-control' }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card-footer text-right">
+            <button type="submit" class="btn btn-primary">Guardar Usuario</button>
+            <a href="{% url 'usuarios:listar' %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Cancelar
+            </a>
+        </div>
+        
+    </div>
+</form>
+
+<script>
+
+const passwordInput = document.getElementById("password");
+const confirmPassword = document.getElementById("confirm_password");
+
+const maxLength = 15;
+const minLength = 8;
+
+const strengthBar = document.getElementById('password-strength-bar');
+const strengthText = document.getElementById('password-text');
+const confirmError = document.getElementById('confirm_error');
+
+/* ===== OJITOS ===== */  
+document.getElementById("btn-ojo").onclick = () => {
+    passwordInput.type = passwordInput.type === "password" ? "text" : "password";
+};
+
+document.getElementById("btn-ojo-confirm").onclick = () => {
+    confirmPassword.type = confirmPassword.type === "password" ? "text" : "password";
+};
+
+/* ===== BARRA DE SEGURIDAD ===== */
+if(passwordInput){
+
+passwordInput.addEventListener('input', function(){
+
+    let val = this.value;
+
+    if(val.length > maxLength){
+        val = val.slice(0, maxLength);
+        this.value = val;
+    }
+
+    let strength = 0;
+
+    if (val.length >= minLength) strength += 20;
+    if (/[a-z]/.test(val)) strength += 20;
+    if (/[A-Z]/.test(val)) strength += 20;
+    if (/[0-9]/.test(val)) strength += 20;
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(val)) strength += 20;
+
+    strengthBar.style.width = strength + "%";
+
+    if(val.length === 0){
+        strengthText.innerText = "La contraseña está vacía";
+        strengthBar.className = "progress-bar";
+    }
+    else if (strength < 40) {
+        strengthBar.className = "progress-bar bg-danger";
+        strengthText.innerText = "Muy débil";
+    } 
+    else if (strength < 80) {
+        strengthBar.className = "progress-bar bg-warning";
+        strengthText.innerText = "Media";
+    } 
+    else {
+        strengthBar.className = "progress-bar bg-success";
+        strengthText.innerText = "Fuerte";
+    }
+
+});
+}
+
+/* ===== VALIDAR CONFIRMACION ===== */
+if(confirmPassword){
+confirmPassword.addEventListener("input", function(){
+    if(passwordInput.value !== confirmPassword.value){
+        confirmError.innerText = "Las contraseñas no coinciden";
+    }else{
+        confirmError.innerText = "";
+    }
+});
+}
+
+/* ===== VALIDAR ENVIO ===== */
+document.getElementById("usuarioForm").addEventListener("submit", function(e){
+    if(passwordInput.value !== confirmPassword.value){
+        confirmError.innerText = "Las contraseñas no coinciden";
+        confirmPassword.focus();
+        e.preventDefault();
+    }
+});
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,172 @@
+{% extends "main.html" %}
+{% block Contenido %}
+
+{# Card principal con sombra para diseño más profesional #}
+<div class="card shadow-lg">
+
+    {# Encabezado con fondo azul y texto blanco para resaltar el título #}
+    <div class="card-header bg-primary text-white">
+        <h3 class="text-center mb-0">
+            Detalle del Pedido #{{ pedido.id_pedido }}
+        </h3>
+    </div>
+
+    <div class="card-body">
+
+        {# ================== INFORMACIÓN GENERAL DEL PEDIDO ================== #}
+        <div class="row mb-4">
+
+            {# Columna izquierda: mesa y estado #}
+            <div class="col-md-6">
+                <p><strong>Mesa:</strong> {{ pedido.mesa.numero_mesa }}</p>
+
+                {# Badge visual para resaltar el estado del pedido #}
+                <p>
+                    <strong>Estado:</strong>
+                    <span class="badge bg-info">{{ pedido.estado }}</span>
+                </p>
+            </div>
+
+            {# Columna derecha: empleado y fecha #}
+            <div class="col-md-6">
+                <p>
+                    <strong>Empleado:</strong>
+                    {{ pedido.usuario.nombre }} {{ pedido.usuario.apellido }}
+                </p>
+
+                {# Formateo profesional de fecha y hora #}
+                <p>
+                    <strong>Fecha:</strong>
+                    {{ pedido.fecha_hora|date:"d/m/Y H:i" }}
+                </p>
+            </div>
+
+        </div>
+
+        <hr>
+
+        {# ================== PLATOS DEL PEDIDO ================== #}
+        <h5 class="mb-3">Platos del Pedido</h5>
+
+        {# Tabla responsive para que se adapte a celulares #}
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped text-center">
+
+                {# Encabezado oscuro para separar visualmente los títulos #}
+                <thead class="table-dark">
+                    <tr>
+                        <th>Plato</th>
+                        <th>Precio Unitario</th>
+                        <th>Cantidad</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {# Recorremos todos los platos asociados al pedido #}
+                    {% for detalle in pedido.detalle_platos.all %}
+                        <tr>
+                            {# Nombre del plato #}
+                            <td>{{ detalle.plato.nombre }}</td>
+
+                            {# Precio unitario tomado directo de la BD #}
+                            <td>${{ detalle.plato.precio }}</td>
+
+                            {# Cantidad solicitada #}
+                            <td>{{ detalle.cantidad }}</td>
+
+                            {# Subtotal calculado desde la propiedad del modelo #}
+                            <td>${{ detalle.subtotal }}</td>
+                        </tr>
+                    {% empty %}
+                        {# Mensaje si no hay platos en el pedido #}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">
+                                No hay platos en este pedido.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+
+        {# Subtotal solo de platos #}
+        <div class="text-end mb-3">
+            <strong>Subtotal Platos: ${{ pedido.total_platos }}</strong>
+        </div>
+
+        <hr>
+
+        {# ================== PRODUCTOS DEL PEDIDO ================== #}
+        <h5 class="mb-3">Productos del Pedido</h5>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped text-center">
+
+                <thead class="table-dark">
+                    <tr>
+                        <th>Producto</th>
+                        <th>Precio Unitario</th>
+                        <th>Cantidad</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {# Recorremos todos los productos asociados al pedido #}
+                    {% for detalle in pedido.detalle_productos.all %}
+                        <tr>
+                            {# Nombre del producto #}
+                            <td>{{ detalle.producto.nombre }}</td>
+
+                            {# Precio unitario tomado directo de la BD #}
+                            <td>${{ detalle.producto.precio }}</td>
+
+                            {# Cantidad solicitada #}
+                            <td>{{ detalle.cantidad }}</td>
+
+                            {# Subtotal calculado desde la propiedad del modelo #}
+                            <td>${{ detalle.subtotal }}</td>
+                        </tr>
+                    {% empty %}
+                        {# Mensaje si no hay productos en el pedido #}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">
+                                No hay productos en este pedido.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+
+        {# Subtotal solo de productos #}
+        <div class="text-end mb-3">
+            <strong>Subtotal Productos: ${{ pedido.total_productos }}</strong>
+        </div>
+
+        <hr>
+
+        {# ================== TOTAL GENERAL ================== #}
+        <div class="text-end">
+            <h3>
+                Total General:
+                <span class="text-success">
+                    ${{ pedido.total }}
+                </span>
+            </h3>
+        </div>
+
+        {# Botón de regreso centrado #}
+        <div class="text-center mt-4">
+            <a href="{% url 'app:listar_pedidos' %}" class="btn btn-secondary">
+                Volver
+            </a>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,824 @@
+{% extends 'main.html' %}
+{% load static %}
+
+{% block Contenido %}
+
+<link href="{% static "css/select2.min.css" %}" rel="stylesheet">
+
+<div class="d-flex align-items-center mb-4">
+
+    <a href="{% url 'app:listar_pedidos' %}" class="btn btn-dark btn-sm me-3">
+        <i class="fas fa-arrow-left"></i> Regresar
+    </a>
+
+
+</div>
+    <form method="post" id="form-pedido" novalidate>
+        {% csrf_token %}
+
+        {% if form.instance.estado == 'Entregado' %}
+        <div class="alert alert-success text-center mb-3" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            <strong>Este pedido ya fue entregado.</strong>&nbsp; El estado no puede modificarse.
+        </div> <!-- nbsp grarantiza espacio -->
+        {% endif %}
+
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-info-circle"></i> Información del Pedido
+            </div>
+            <div class="card-body">
+                {% for campo in form.visible_fields %}
+                    <div class="form-group mb-3">
+                        <label><strong>{{ campo.label }}:</strong></label>
+                        {{ campo }}
+                        {% if campo.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ campo.errors|join:", " }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-warning text-dark">
+                <i class="fas fa-utensils"></i> Platos del Pedido
+            </div>
+            <div class="card-body" id="contenedor-platos">
+                {{ formset_platos.management_form }}
+
+                {% for form_plato in formset_platos %}
+                    <div class="border rounded p-3 mb-3 fila-plato bg-light">
+                        <div class="row align-items-end">
+                            <div class="col-md-6 mb-2">
+                                <label><strong>Plato:</strong></label>
+                                {{ form_plato.plato }}
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <label><strong>Cantidad:</strong></label>
+                                {{ form_plato.cantidad }}
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <label><strong>Subtotal:</strong></label>
+                                <input type="text" class="form-control subtotal-plato" readonly placeholder="$0">
+                            </div>
+                        </div>
+
+                        {% if form_plato.instance.pk %}
+                            <div class="form-check mt-2">
+                                {{ form_plato.DELETE }}
+                                <label class="form-check-label text-danger" title="Eliminar este plato">Eliminar este plato</label>
+                            </div>
+                        {% endif %}
+
+                        {% for campo_oculto in form_plato.hidden_fields %}
+                            {{ campo_oculto }}
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="card-footer bg-white">
+                <button type="button" class="btn btn-outline-warning btn-sm" id="agregar-plato" title="Agregar otro plato">
+                    <i class="fas fa-plus"></i> Agregar otro plato
+                </button>
+            </div>
+        </div>
+
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-box"></i> Productos del Pedido
+            </div>
+            <div class="card-body" id="contenedor-productos">
+                {{ formset_productos.management_form }}
+
+                {% for form_producto in formset_productos %}
+                    <div class="border rounded p-3 mb-3 fila-producto bg-light">
+                        <div class="row align-items-end">
+                            <div class="col-md-6 mb-2">
+                                <label><strong>Producto:</strong></label>
+                                {{ form_producto.producto }}
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <label><strong>Cantidad:</strong></label>
+                                {{ form_producto.cantidad }}
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <label><strong>Subtotal:</strong></label>
+                                <input type="text" class="form-control subtotal-producto" readonly placeholder="$0">
+                            </div>
+                        </div>
+
+                        {% if form_producto.instance.pk %}
+                            <div class="form-check mt-2">
+                                {{ form_producto.DELETE }}
+                                <label class="form-check-label text-danger" title="Eliminar este producto">Eliminar este producto</label>
+                            </div>
+                        {% endif %}
+
+                        {% for campo_oculto in form_producto.hidden_fields %}
+                            {{ campo_oculto }}
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="card-footer bg-white">
+                <button type="button" class="btn btn-outline-success btn-sm" id="agregar-producto" title="Agregar otro producto">
+                    <i class="fas fa-plus"></i> Agregar otro producto
+                </button>
+            </div>
+        </div>
+
+        <div class="card mb-4 border-primary">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Total del Pedido:</h4>
+                <h3 class="mb-0 text-primary"><strong id="total-general">$0</strong></h3>
+            </div>
+        </div>
+
+        <div class="text-end mb-5">
+            <a href="{% url 'app:listar_pedidos' %}" class="btn btn-secondary" title="Cancelar">
+                <i class="fas fa-times"></i> Cancelar
+            </a>
+            <button type="submit"  class="btn btn-primary px-4" title="Guardar Pedido">
+                <i class="fas fa-save"></i> Guardar Pedido
+            </button>
+        </div>
+    </form>
+</div>
+
+{% endblock Contenido %}
+
+{% block js %}
+<script src="{% static "js/select2.min.js" %}"></script>
+
+<script>
+    // Obtener datos JSON del context
+    const preciosPlatos = {{ platos_json|safe|default:"{}" }};
+    const preciosProductos = {{ productos_json|safe|default:"{}" }};
+    const stockProductos = {{ stock_json|safe|default:"{}" }};
+
+
+    // --- VERIFICAR SI LA MESA ESTÁ DISPONIBLE AL SELECCIONARLA ---
+    $(document).on('select2:select', '#id_mesa', function () {
+        const mesaId = $(this).val();
+
+        // Obtenemos el ID del pedido actual (solo en edición, en creación es null)
+        const pedidoId = {{ form.instance.pk|default:"null" }};
+
+        // Consultamos al servidor si la mesa tiene pedidos sin pagar
+        $.ajax({    //ajax sirve para que no se recargue la pagina si no que busque la mesa y mande la alerta
+            url: "{% url 'app:verificar_mesa_disponible' %}",
+            method: 'GET',
+            data: {
+                mesa_id: mesaId,
+                pedido_id: pedidoId
+            },
+            success: function (data) {
+                if (data.ocupada) {
+                    // La mesa tiene un pedido pendiente de pago, mostramos alerta
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Mesa no disponible',
+                        html: 'Esta mesa tiene un pedido <strong>pendiente de pago</strong>.<br>Debe pagarse antes de asignarla a un nuevo pedido.',
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#d33'
+                    });
+
+                    // Limpiamos la mesa seleccionada para obligar a elegir otra
+                    $('#id_mesa').val('').trigger('change');
+
+                    // Resaltamos el campo en rojo
+                    $('#id_mesa').next('.select2').find('.select2-selection').css({
+                        'border': '2px solid red',
+                        'border-radius': '4px'
+                    });
+
+                    // Quitamos el borde rojo cuando seleccione otra mesa
+                    $('#id_mesa').one('select2:select', function () {
+                        $(this).next('.select2').find('.select2-selection').css({
+                            'border': '',
+                            'border-radius': ''
+                        });
+                    });
+                }
+            },
+            error: function () {
+                console.log('Error al verificar disponibilidad de la mesa');
+            }
+        });
+    });
+    $(document).on('select2:select', '#id_usuario', function () {
+        const mesaVal = $('#id_mesa').val();
+
+        if (!mesaVal) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Mesa requerida',
+                html: 'Debe <strong>seleccionar una mesa</strong>',
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#f0ad4e'
+            });
+
+            // Resaltar el campo mesa en rojo para guiar al usuario
+            $('#id_mesa').next('.select2').find('.select2-selection').css({
+                'border': '2px solid red',
+                'border-radius': '4px'
+            });
+
+            // Quitar borde rojo cuando seleccione la mesa
+            $('#id_mesa').one('select2:select', function () {
+                $(this).next('.select2').find('.select2-selection').css({
+                    'border': '',
+                    'border-radius': ''
+                });
+            });
+        }
+    });
+
+    // --- 1. FUNCIONES CORE ---
+
+    // Inicializa Select2 en los selects visibles
+    function activarSelect2() {
+        $('.select2').each(function() {
+            $(this).select2({
+                placeholder: 'Seleccione una opción',
+                allowClear: true,
+                width: '100%',
+                dropdownParent: $(this).parent()
+            });
+        });
+    }
+
+    // Calcula subtotal de Platos (lee precio de JSON)
+    function calcularSubtotalPlato(fila) {
+        const selectPlato = fila.find('select[name$="-plato"]');
+        const platoId = selectPlato.val();
+        const cantidad = parseFloat(fila.find('input[name$="-cantidad"]').val()) || 0;
+        const precio = parseFloat(preciosPlatos[platoId]) || 0;
+        const subtotal = precio * cantidad;
+        fila.find('.subtotal-plato').val('$' + subtotal.toLocaleString('es-CO'));
+        return subtotal;
+    }
+
+    // Calcula subtotal de Productos (lee precio y stock de JSON)
+    function calcularSubtotalProducto(fila) {
+        const selectProducto = fila.find('select[name$="-producto"]');
+        const productoId = selectProducto.val();
+        const cantidad = parseFloat(fila.find('input[name$="-cantidad"]').val()) || 0;
+        const precio = parseFloat(preciosProductos[productoId]) || 0;
+        const subtotal = precio * cantidad;
+        fila.find('.subtotal-producto').val('$' + subtotal.toLocaleString('es-CO'));
+        return subtotal;
+    }
+
+    // Recalcula el total general sumando todo
+    function recalcularTotal() {
+        let total = 0;
+        $('.fila-plato').each(function() {
+            total += calcularSubtotalPlato($(this));
+        });
+        $('.fila-producto').each(function() {
+            total += calcularSubtotalProducto($(this));
+        });
+        $('#total-general').text('$' + total.toLocaleString('es-CO'));
+    }
+
+    // Valida el stock de productos
+    function validarStock(fila) {
+        const selectProducto = fila.find('select[name$="-producto"]');
+        const inputCant = fila.find('input[name$="-cantidad"]');
+        const productoId = selectProducto.val();
+        const cantidad = parseInt(inputCant.val()) || 0;
+        const stock = parseInt(stockProductos[productoId]) || 0;
+
+        if (stock !== undefined && stock > 0) {
+            if (cantidad > stock) {
+                Swal.fire('Stock insuficiente', `Solo quedan ${stock} unidades`, 'warning');
+                inputCant.val(stock);
+            }
+        }
+    }
+    function validarDuplicadoPlato(filaActual) {
+        const selectActual = filaActual.find('select[name$="-plato"]');
+        const platoId = selectActual.val();
+        if (!platoId) return false;
+
+        let duplicado = false;
+        $('.fila-plato').not(filaActual).each(function() {
+            const otroId = $(this).find('select[name$="-plato"]').val();
+            if (otroId && otroId === platoId) {
+                duplicado = true;
+                return false; // break
+            }
+        });
+
+        if (duplicado) {
+            const nombrePlato = selectActual.find('option:selected').text();
+            Swal.fire({
+                icon: 'warning',
+                title: '¡Plato repetido!',
+                html: `El plato <strong>${nombrePlato}</strong> ya está en el pedido.<br>
+                        Si quieres más cantidad, edita la fila que ya existe`,
+                confirmButtonText: 'Entendido'
+            });
+            selectActual.val('').trigger('change');
+            filaActual.find('input[name$="-cantidad"]').val(1);
+            filaActual.find('.subtotal-plato').val('');
+            recalcularTotal();
+        }
+
+        return duplicado;
+    }
+
+// Valida si el producto ya fue seleccionado en otra fila
+    function validarDuplicadoProducto(filaActual) {
+        const selectActual = filaActual.find('select[name$="-producto"]');
+        const productoId = selectActual.val();
+        if (!productoId) return false;
+
+        let duplicado = false;
+        $('.fila-producto').not(filaActual).each(function() {
+            const otroId = $(this).find('select[name$="-producto"]').val();
+            if (otroId && otroId === productoId) {
+                duplicado = true;
+                return false; // break
+            }
+        });
+
+        if (duplicado) {
+            const nombreProducto = selectActual.find('option:selected').text();
+            Swal.fire({
+                icon: 'warning',
+                title: '¡Producto repetido!',
+                html: `El producto <strong>${nombreProducto}</strong> ya está en el pedido.<br>
+                Si quieres más cantidad, edita la fila que ya existe`,
+                confirmButtonText: 'Entendido'
+            });
+            selectActual.val('').trigger('change');
+            filaActual.find('input[name$="-cantidad"]').val(1);
+                filaActual.find('.subtotal-producto').val('');
+            recalcularTotal();
+        }
+
+        return duplicado;
+    }
+
+    function reIndexFormset(selectorFila, prefijo) {
+        const filas = $(selectorFila);
+        
+        filas.each(function(index) {
+            // Actualizar campos del formset
+            $(this).find('input, select, label').each(function() {
+                const elem = $(this);
+                
+                // Actualizar 'name' atributo
+                if (elem.attr('name')) {
+                    const oldName = elem.attr('name');
+                    const newName = oldName.replace(
+                        new RegExp(`(${prefijo}-)\\d+(-)`),
+                        `$1${index}$2`
+                    );
+                    if (oldName !== newName) {
+                        elem.attr('name', newName);
+                    }
+                }
+                
+                // Actualizar 'id' atributo
+                if (elem.attr('id')) {
+                    const oldId = elem.attr('id');
+                    const newId = oldId.replace(
+                        new RegExp(`(id_${prefijo}-)\\d+(-)`),
+                        `$1${index}$2`
+                    );
+                    if (oldId !== newId) {
+                        elem.attr('id', newId);
+                    }
+                }
+                
+                // Actualizar 'for' atributo
+                if (elem.attr('for')) {
+                    const oldFor = elem.attr('for');
+                    const newFor = oldFor.replace(
+                        new RegExp(`(id_${prefijo}-)\\d+(-)`),
+                        `$1${index}$2`
+                    );
+                    if (oldFor !== newFor) {
+                        elem.attr('for', newFor);
+                    }
+                }
+            });
+        });
+    }
+
+    function agregarFila(selectorFila, prefijo, contenedorId, totalFormsId) {
+        const totalForms = $(totalFormsId);
+        const nuevoIndice = parseInt(totalForms.val());
+
+        // Límite máximo: 10 filas por formset
+        const MAX_FILAS = 10;
+        if (nuevoIndice >= MAX_FILAS) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire('Límite alcanzado', `No puede agregar más de ${MAX_FILAS} elementos.`, 'warning');
+            } else {
+                alert(`No puede agregar más de ${MAX_FILAS} elementos.`);
+            }
+            return;
+        }
+        const ultimaFila = $(selectorFila).last();
+        
+        // Destruir Select2 en el contenedor para evitar HTML extra al clonar
+        $(contenedorId).find('select').select2 && $(contenedorId).find('select').select2('destroy');
+
+        // Clonamos la última fila sin eventos
+        const nuevaFila = ultimaFila.clone(false);
+
+        // Detectamos índice anterior (toma el primer input/select disponible)
+        const nombrePrimer = ultimaFila.find('select, input').first().attr('name') || '';
+        const regexIndice = new RegExp(`${prefijo}-(\\d+)-`);
+        const match = nombrePrimer.match(regexIndice);
+        const indiceAnterior = match ? parseInt(match[1]) : (nuevoIndice - 1);
+
+        // Actualizamos TODOS los ID y NAME de la nueva fila con el nuevo índice
+        nuevaFila.find('input, select, label').each(function() {
+            const elem = $(this);
+            
+            // Actualizar 'name' atributo
+            if (elem.attr('name')) {
+                const oldName = elem.attr('name');
+                const newName = oldName.replace(
+                    new RegExp(`(${prefijo}-)${indiceAnterior}(-)`),
+                    `$1${nuevoIndice}$2`
+                );
+                elem.attr('name', newName);
+            }
+            
+            // Actualizar 'id' atributo
+            if (elem.attr('id')) {
+                const oldId = elem.attr('id');
+                const newId = oldId.replace(
+                    new RegExp(`(id_${prefijo}-)${indiceAnterior}(-)`),
+                    `$1${nuevoIndice}$2`
+                );
+                elem.attr('id', newId);
+            }
+            
+            // Actualizar 'for' atributo
+            if (elem.attr('for')) {
+                const oldFor = elem.attr('for');
+                const newFor = oldFor.replace(
+                    new RegExp(`(id_${prefijo}-)${indiceAnterior}(-)`),
+                    `$1${nuevoIndice}$2`
+                );
+                elem.attr('for', newFor);
+            }
+        });
+
+        // Limpiamos los datos de la nueva fila
+        nuevaFila.find('input[type=number]').val(1);
+        nuevaFila.find('input[type=text]').val('');
+        nuevaFila.find('select').val('');
+        nuevaFila.find('.form-check').remove(); // No clonar el botón de eliminar si es de un registro viejo
+        nuevaFila.find('input[name$="-id"]').val(''); // Limpiar ID de base de datos
+
+        // Añadimos botón para eliminar esta fila (solo para filas nuevas)
+        const botonEliminar = `<div class="text-end mt-2"><button type="button" class="btn btn-sm btn-danger btn-remove-fila">Eliminar</button></div>`;
+        // si ya existe un contenedor de acciones lo reemplazamos, sino lo agregamos
+        if (nuevaFila.find('.btn-remove-fila').length === 0) {
+            nuevaFila.append(botonEliminar);
+        }
+
+        // Insertar en el DOM
+        $(contenedorId).append(nuevaFila);
+
+        // Actualizar contador de Django
+        totalForms.val(nuevoIndice + 1);
+
+        // Reindexar el formset completo para mantener índices continuos
+        reIndexFormset(selectorFila, prefijo);
+
+        // Reactivar Select2 en todas las filas
+        activarSelect2();
+
+        // Calcular subtotal de la nueva fila y total general
+        const filaNueva = $(contenedorId).children().last();
+        if (filaNueva.hasClass('fila-plato')) calcularSubtotalPlato(filaNueva);
+        if (filaNueva.hasClass('fila-producto')) calcularSubtotalProducto(filaNueva);
+        recalcularTotal();
+    }
+
+    // Eventos de botones "Agregar" (delegados para asegurar que funcionan aunque el script se cargue antes)
+    $(document).on('click', '#agregar-plato', function(e) {
+        e.preventDefault();
+        // Verificar que todos los platos existentes tengan un plato seleccionado
+        let filaVacia = null;
+        $('.fila-plato').each(function() {
+            const platoVal = $(this).find('select[name$="-plato"]').val();
+            if (!platoVal) {
+                filaVacia = $(this);
+                return false; // break
+            }
+        });
+
+        if (filaVacia) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Plato sin seleccionar',
+                html: 'Debe <strong>seleccionar un plato</strong> en todas las filas antes de agregar otra.',
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#f0ad4e'
+            });
+
+            // Resaltar la fila vacía
+            filaVacia.find('select[name$="-plato"]').next('.select2').find('.select2-selection').css({
+                'border': '2px solid red',
+                'border-radius': '4px'
+            });
+
+            // Quitar borde al seleccionar
+            filaVacia.find('select[name$="-plato"]').one('select2:select', function() {
+                $(this).next('.select2').find('.select2-selection').css({
+                    'border': '',
+                    'border-radius': ''
+                });
+            });
+
+            // Scroll a la fila vacía
+            $('html, body').animate({
+                scrollTop: filaVacia.offset().top - 100
+            }, 400);
+
+            return;
+        }
+        // Verificar cantidad válida en platos
+    let filaSinCantidad = null;
+    $('.fila-plato').each(function() {
+        const fila = $(this);
+        const platoVal = fila.find('select[name$="-plato"]').val();
+        const inputcantidad = fila.find('input').filter(function() {
+            const name = $(this).attr('name') || '';
+            return name.indexOf('-cantidad') !== -1;
+        });
+        const cantidad = inputcantidad.val();
+        if (platoVal && (cantidad === '' || cantidad === undefined || isNaN(Number(cantidad)) || Number(cantidad) <= 0)) {
+            filaSinCantidad = fila;
+            return false; // break
+        }
+    });
+
+    if (filaSinCantidad) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Cantidad requerida',
+            html: 'Debe ingresar una <strong>cantidad válida</strong> en todos los platos.',
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#f0ad4e'
+        });
+        const inputError = filaSinCantidad.find('input').filter(function() {
+            const name = $(this).attr('name') || '';
+            return name.indexOf('-cantidad') !== -1;
+        });
+        $(inputError).css({ 'border': '2px solid red', 'border-radius': '4px' });
+        $(inputError).one('input', function() {
+            $(this).css({ 'border': '', 'border-radius': '' });
+        });
+        $('html, body').animate({ scrollTop: filaSinCantidad.offset().top - 100 }, 400);
+        return;
+    }
+
+
+        agregarFila('.fila-plato', 'detalle_platos', '#contenedor-platos', '#id_detalle_platos-TOTAL_FORMS');
+    });
+
+    $(document).on('click', '#agregar-producto', function(e) {
+    e.preventDefault();
+
+    // 1. Validar que todos los platos tengan cantidad válida
+    let filaSinCantidad = null;
+
+    $('.fila-plato').each(function() {
+        const fila = $(this);
+        const platoVal = fila.find('select[name$="-plato"]').val();
+
+        const inputCantidad = fila.find('input[name$="-cantidad"]');
+        const cantidad = inputCantidad.val();
+
+        if (platoVal && (cantidad === '' || isNaN(cantidad) || Number(cantidad) <= 0)) {
+            filaSinCantidad = fila;
+            return false;
+        }
+    });
+
+    if (filaSinCantidad) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Cantidad faltante',
+            html: 'Debe ingresar una <strong>cantidad válida</strong> en todos los platos antes de agregar productos.',
+            confirmButtonText: 'Entendido'
+        });
+
+        const inputError = filaSinCantidad.find('input[name$="-cantidad"]');
+
+        inputError.css({
+            'border': '2px solid red',
+            'border-radius': '4px'
+        });
+
+        inputError.one('input', function() {
+            $(this).css({
+                'border': '',
+                'border-radius': ''
+            });
+        });
+
+        $('html, body').animate({
+            scrollTop: filaSinCantidad.offset().top - 100
+        }, 400);
+
+        return;
+    }
+
+    // 2. Validar que todos los productos tengan uno seleccionado
+    let filaVacia = null;
+
+    $('.fila-producto').each(function() {
+        const productoVal = $(this).find('select[name$="-producto"]').val();
+        if (!productoVal) {
+            filaVacia = $(this);
+            return false;
+        }
+    });
+
+    if (filaVacia) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Producto sin seleccionar',
+            html: 'Debe <strong>seleccionar un producto</strong> en todas las filas antes de agregar otra.',
+            confirmButtonText: 'Entendido'
+        });
+        return;
+    }
+    
+
+    agregarFila('.fila-producto', 'detalle_productos', '#contenedor-productos', '#id_detalle_productos-TOTAL_FORMS');
+});
+
+    // --- 4. EVENTOS DE CAMBIO ---
+
+    // Escuchamos cambios en selects y inputs de platos
+    $(document).on('change', '.fila-plato select, .fila-plato input', function(e) {
+        const fila = $(this).closest('.fila-plato');
+        if (fila.length) {
+            if ($(this).is('select')) {
+                if (validarDuplicadoPlato(fila)) return;
+            }
+            calcularSubtotalPlato(fila);
+            recalcularTotal();
+        }
+    });
+
+    // Escuchamos cambios en selects e inputs de productos
+    $(document).on('change', '.fila-producto select, .fila-producto input', function(e) {
+        const fila = $(this).closest('.fila-producto');
+        if (fila.length) {
+            if ($(this).is('select')) {
+                if (validarDuplicadoProducto(fila)) return;
+            }
+            validarStock(fila);
+            calcularSubtotalProducto(fila);
+            recalcularTotal();
+        }
+    });
+
+    // También respondemos al evento select2:select y select2:unselect
+    $(document).on('select2:select select2:unselect', '.select2', function() {
+        const fila = $(this).closest('.fila-plato, .fila-producto');
+        if (fila.length) {
+            if (fila.hasClass('fila-plato')) {
+                validarDuplicadoPlato(fila);
+                calcularSubtotalPlato(fila);
+            }
+            if (fila.hasClass('fila-producto')) {
+                validarDuplicadoProducto(fila);
+                validarStock(fila);
+                calcularSubtotalProducto(fila);
+            }
+            recalcularTotal();
+        }
+    });
+
+    // Eliminar fila (solo filas nuevas). Reindexa y actualiza TOTAL_FORMS
+    $(document).on('click', '.btn-remove-fila', function(e) {
+        e.preventDefault();
+        const fila = $(this).closest('.fila-plato, .fila-producto');
+        const esPlato = fila.hasClass('fila-plato');
+        const totalFormsSel = esPlato ? '#id_detalle_platos-TOTAL_FORMS' : '#id_detalle_productos-TOTAL_FORMS';
+        const selectorFila = esPlato ? '.fila-plato' : '.fila-producto';
+        const prefijo = esPlato ? 'detalle_platos' : 'detalle_productos';
+
+        // Remover la fila del DOM
+        fila.remove();
+
+        // Decrementar contador
+        const totalForms = $(totalFormsSel);
+        const nuevo = Math.max(0, parseInt(totalForms.val()) - 1);
+        totalForms.val(nuevo);
+
+        // Reindexar las filas restantes
+        reIndexFormset(selectorFila, prefijo);
+
+        // Recalcular total
+        recalcularTotal();
+    });
+
+    // --- 5. INICIO ---
+    $(document).ready(function() {
+        activarSelect2();
+        
+        // Delay para asegurar que todos los elementos estén listos
+        setTimeout(function() {
+            recalcularTotal();
+        }, 100);
+    });
+
+    $('#form-pedido').on('submit', function(e) {
+        
+                // Verificar que exista al menos un plato o un producto
+        const tienePlatos = $('.fila-plato select[name$="-plato"]').filter(function () {
+            return $(this).val();
+        }).length > 0;
+
+        const tieneProductos = $('.fila-producto select[name$="-producto"]').filter(function () {
+            return $(this).val();
+        }).length > 0;
+
+        if (!tienePlatos && !tieneProductos) {
+            e.preventDefault();
+
+            Swal.fire({
+                icon: 'warning',
+                title: 'Pedido vacío',
+                html: 'Debe agregar al menos un <strong>plato</strong> o un <strong>producto</strong>.',
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#f0ad4e'
+            });
+
+            return false;
+        }
+
+    let filaSinCantidad = null;
+
+    $('.fila-plato').each(function() {
+        const fila = $(this);
+        const plato = fila.find('select[name$="-plato"]').val();
+        const cantidad = fila.find('input[name$="-cantidad"]').val();
+
+        if (plato && (!cantidad || Number(cantidad) <= 0)) {
+            filaSinCantidad = fila;
+            return false;
+        }
+    });
+
+    if (filaSinCantidad) {
+        e.preventDefault(); // evita que se recargue la página
+
+        Swal.fire({
+            icon: 'warning',
+            title: 'Cantidad faltante',
+            text: 'Debe ingresar una cantidad válida en todos los platos.'
+        });
+
+        const inputError = filaSinCantidad.find('input[name$="-cantidad"]');
+
+        inputError.css({
+            'border': '2px solid red'
+        });
+
+        $('html, body').animate({
+            scrollTop: filaSinCantidad.offset().top - 100
+        }, 400);
+
+        return false;
+    }
+
+});
+
+// ===== ALERTA ÉXITO AL GUARDAR PEDIDO =====
+{% if messages %}
+    {% for message in messages %}
+        {% if 'pedido' in message.tags or message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+            Swal.fire({
+                icon: 'success',
+                title: '¡Pedido guardado!',
+                text: '{{ message }}',
+                confirmButtonColor: '#2e8b57',
+                confirmButtonText: 'Aceptar',
+                showConfirmButton: true,
+                allowOutsideClick: false,
+            });
+        {% endif %}
+    {% endfor %}
+{% endif %}
+</script>
+{% endblock js %}

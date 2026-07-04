@@ -1,0 +1,135 @@
+{% extends "main.html" %}
+{% load static %}
+{% block Contenido %}
+<div class="tabla-wrapper">
+  <form method="GET" class="mb-3">
+    <input type="text" name="buscar" placeholder="Buscar por estado" 
+      value="{{ request.GET.buscar }}"
+      class="form-control" 
+      style="width: 300px; display: inline;">
+
+    <input type="date" name="fecha" 
+      value="{{ request.GET.fecha }}" 
+      class="form-control"
+      style="width: 200px; display: inline;">
+
+    <button type="submit" title="Buscar" class="btn btn-primary">
+      Buscar
+    </button>
+  </form>
+
+  {% if request.GET.fecha and not object_list %}
+  <div class="alert alert-danger text-center mt-3">
+    No hay un pedido con esa fecha.
+  </div>
+  {% endif %}
+
+  <table class="tabla" id="tabla">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Mesa</th>
+        <th>Platos</th>
+        <th>Productos</th>
+        <th>Empleado</th>
+        <th>Fecha</th>
+        <th>Estado</th>
+        <th>Imprimir</th>
+      </tr>
+    </thead>
+
+    <tbody>
+        {% for c in object_list %}
+        <tr>
+            <td>{{ c.id_comanda }}</td>
+            <td>Mesa {{ c.pedido.mesa.numero_mesa }}</td>
+
+            <td>
+                {% for d in c.pedido.detalle_platos.all %}
+                    {{ d.plato.nombre }} (x{{ d.cantidad }})<br>
+                {% empty %}
+                    Sin platos
+                {% endfor %}
+            </td>
+
+            <td>
+                {% for d in c.pedido.detalle_productos.all %}
+                    {{ d.producto.nombre }} (x{{ d.cantidad }})<br>
+                {% empty %}
+                    Sin productos
+                {% endfor %}
+            </td>
+
+            <td>{{ c.pedido.usuario }}</td>
+            <td>{{ c.fecha_hora|date:"d/m/Y H:i" }}</td>
+            <td>{{ c.estado }}</td>
+
+            <td>
+            <a href="{% url 'app:imprimir_comanda' c.id_comanda %}"
+               title="Imprimir"
+               class="btn btn-sm {% if c.estado == 'Entregado' %}btn-secondary{% else %}btn-primary{% endif %}">
+               
+                <i class="fas fa-print"></i> Imprimir
+            </a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="8" class="text-center">
+                No hay comandas registradas
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function confirmarImpresion(estado) {
+    if (estado === 'Entregado') {
+        Swal.fire({
+            icon: 'info',
+            title: 'Ya entregado',
+            text: 'Esta comanda ya fue marcada como Entregada.',
+            confirmButtonText: 'Imprimir de nuevo',
+            showCancelButton: true,
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#6c757d'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                return true; // deja pasar el link
+            }
+        });
+        return false; // bloquea el link hasta confirmar
+    }
+    return true; // si no está entregado, deja pasar directo
+}
+</script>
+<!-- PAGINACIÓN -->
+{% if is_paginated %}
+<div style="display:flex; justify-content:center; margin-top:15px; gap:5px;">
+
+  {% if page_obj.has_previous %}
+    <a href="?page=1" class="btn btn-secondary btn-xs">« Primera</a>
+    <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary btn-xs">‹ Anterior</a>
+  {% endif %}
+
+  {% for num in paginator.page_range %}
+    {% if page_obj.number == num %}
+      <span class="btn btn-primary btn-xs">{{ num }}</span>
+    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+      <a href="?page={{ num }}" class="btn btn-secondary btn-xs">{{ num }}</a>
+    {% endif %}
+  {% endfor %}
+
+  {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}" title="Siguiente" class="btn btn-secondary btn-xs">Siguiente ›</a>
+    <a href="?page={{ paginator.num_pages }}" title="Última" class="btn btn-secondary btn-xs">Última »</a>
+  {% endif %}
+
+</div>
+<div title="Información de paginación" style="text-align:center; margin-top:8px; color:#888; font-size:0.85em;">
+  Página {{ page_obj.number }} de {{ paginator.num_pages }} — {{ paginator.count }} registros en total
+</div>
+{% endif %}
+{% endblock %}

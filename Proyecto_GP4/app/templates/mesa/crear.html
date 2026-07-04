@@ -1,0 +1,63 @@
+{% extends 'main.html' %}
+{% load widget_tweaks %}
+
+{% block Contenido %}
+<form method="post" action=".">
+    <div class="card card-primary">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-edit"></i> {{ titulo }}
+            </h3>
+        </div>
+
+        <div class="card-body">
+            {% csrf_token %}
+            
+            {% if form.errors %}
+            <div class="alert alert-danger alert-dismissible">
+                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                <h5><i class="icon fas fa-ban"></i> ¡Error al guardar!</h5>
+                <ul>
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        <li>{{ field.label }}: {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {# Ciclo para renderizar los campos: numero_mesa, estado, capacidad, etc. #}
+            {% for field in form.visible_fields %}
+                <div class="form-group">
+                    <label>{{ field.label }}:</label>
+                    {{ field|add_class:"form-control"|attr:"autocomplete:off" }}
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="card-footer">
+            <button type="submit" title="Guardar" class="btn btn-primary btn-flat">
+                <i class="fas fa-save"></i> Guardar Registro
+            </button>
+            <a href="{{ listar_url }}" title="Cancelar" class="btn btn-danger btn-flat">
+                <i class="fas fa-times"></i> Cancelar
+            </a>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block js %}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        {% if form.errors %}
+        Swal.fire({
+            title: "¡Error!",
+            text: "Por favor, verifica los campos del formulario.",
+            icon: "error",
+            confirmButtonText: "Entendido"
+        });
+        {% endif %}
+    </script>
+{% endblock %}

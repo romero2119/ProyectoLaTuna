@@ -1,0 +1,74 @@
+{% extends 'main.html' %}
+
+{% block Contenido %}
+
+<form method="post" id="form-desactivar">
+  {% csrf_token %}
+
+  <div class="card card-warning">
+
+    <div class="card-header">
+      <h3 class="card-title">
+        <i class="fas fa-ban"></i> Desactivar Factura
+      </h3>
+    </div>
+
+    <div class="card-body">
+      <p>¿Estás seguro que deseas <strong>desactivar</strong> esta factura?</p>
+      <ul>
+        <li><strong>ID:</strong> {{ object.id }}</li>
+        <li><strong>Total:</strong> ${{ object.valor_total }}</li>
+        <li><strong>Método de pago:</strong> {{ object.metodo_pago }}</li>
+        <li><strong>Fecha:</strong> {{ object.fecha_hora }}</li>
+      </ul>
+
+      <div class="alert alert-danger">
+        <i class="fas fa-exclamation-triangle"></i>
+        <strong>Atención:</strong> Esta acción es permanente. La factura, pago y venta 
+        quedarán inactivos y no podrán reactivarse.
+      </div>
+
+      <div class="form-group">
+        <label for="observacion"><strong>Motivo de desactivación <span class="text-danger">*</span></strong></label>
+        <textarea 
+          id="observacion"
+          name="observacion" 
+          class="form-control" 
+          rows="3"
+          placeholder="Escribe el motivo por el cual se desactiva esta factura..."
+        ></textarea>
+        <small class="text-muted">Campo obligatorio.</small>
+      </div>
+
+    </div>
+
+    <div class="card-footer text-right">
+      <button type="submit" title="Desactivar" class="btn btn-warning">
+        <i class="fas fa-ban"></i> Sí, desactivar
+      </button>
+      <a href="{% url 'app:listar_facturas' %}" title="Cancelar" class="btn btn-secondary">
+        Cancelar
+      </a>
+    </div>
+
+  </div>
+
+</form>
+
+<script>
+  document.getElementById('form-desactivar').addEventListener('submit', function(e) {
+    const observacion = document.getElementById('observacion').value.trim();
+    if (!observacion) {
+      e.preventDefault();
+      Swal.fire({
+        icon: 'warning',
+        title: 'Campo requerido',
+        text: 'Debes ingresar un motivo para desactivar la factura.',
+        confirmButtonColor: '#e53935',
+        confirmButtonText: 'Entendido'
+      });
+    }
+  });
+</script>
+
+{% endblock %}

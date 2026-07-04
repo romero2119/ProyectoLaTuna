@@ -1,0 +1,156 @@
+{% extends 'main.html' %}
+{% load widget_tweaks %}
+
+{% block Contenido %}
+
+<form method="post" action="." id="miFormulario">
+    {% csrf_token %}
+    <div class="card card-default">
+        <div class="card-body">
+            {% for field in form.visible_fields %}
+            <div class="form-group mb-3">
+                <label>
+                    {{ field.label }}:
+                </label>
+                {{ field|add_class:"form-control campo"|attr:"autocomplete:off" }}
+                <small class="text-danger error-msg"></small>
+                {% if field.help_text %}
+                    <small class="form-text text-muted">
+                        {{ field.help_text }}
+                    </small>
+                {% endif %}
+                {% if field.errors %}
+                    <div class="text-danger small mt-1">
+                        {{ field.errors|striptags }}
+                    </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        <div class="card-footer">
+            <button type="submit" title="Guardar" class="btn btn-primary btn-xs">
+                <i class="fas fa-plus"></i>
+                Guardar registro
+            </button>
+            <a href="{{ listar_url }}" title="Cancelar" class="btn btn-secondary btn-xs">
+                <i class="fas fa-times"></i>
+                Cancelar
+            </a>
+        </div>
+    </div>
+</form>
+
+{% endblock %}
+{% block js %}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const formulario = document.getElementById("miFormulario");
+    const campos = document.querySelectorAll(".campo");
+    campos.forEach(campo => {
+        campo.addEventListener("input", function () {
+            validarCampo(campo);
+        });
+        campo.addEventListener("change", function () {
+            validarCampo(campo);
+        });
+    });
+    function validarCampo(campo){
+        const valor = campo.value.trim();
+        const nombreCampo = campo.name.toLowerCase();
+        const error = campo.parentElement.querySelector(".error-msg");
+        campo.classList.remove("is-valid");
+        campo.classList.remove("is-invalid");
+        error.innerHTML = "";
+        if(valor === ""){
+            campo.classList.add("is-invalid");
+            error.innerHTML = "Este campo es obligatorio";
+            return false;
+        }
+        if(
+            nombreCampo.includes("nombre") ||
+            nombreCampo.includes("apellido")
+        ){
+            const regexLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+            if(!regexLetras.test(valor)){
+                campo.classList.add("is-invalid");
+                error.innerHTML = "Solo se permiten letras";
+                return false;
+            }
+        }
+        if(
+            (
+                nombreCampo.includes("telefono") ||
+                nombreCampo.includes("celular") ||
+                nombreCampo.includes("documento") ||
+                nombreCampo.includes("cedula")
+            )
+            &&
+            campo.tagName !== "SELECT"
+        ){
+            const regexNumeros = /^[0-9]+$/;
+            if(!regexNumeros.test(valor)){
+                campo.classList.add("is-invalid");
+                error.innerHTML = "Solo se permiten números";
+                return false;
+            }
+        }
+        if(campo.type === "email"){
+            const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if(!regexEmail.test(valor)){
+                campo.classList.add("is-invalid");
+                error.innerHTML = "Correo electrónico inválido";
+                return false;
+            }
+        }
+        campo.classList.add("is-valid");
+        return true;
+    }
+    formulario.addEventListener("submit", function(e){
+        let formularioValido = true;
+        campos.forEach(campo => {
+            if(!validarCampo(campo)){
+                formularioValido = false;
+            }
+        });
+        if(!formularioValido){
+            e.preventDefault();
+            Swal.fire({
+                icon: 'error',
+                title: 'Formulario inválido',
+                text: 'Por favor complete correctamente todos los campos',
+                confirmButtonColor: '#3085d6'
+            });
+        }
+    });
+});
+{% if form.errors %}
+Swal.fire({
+    title: '<strong>Error al guardar</strong>',
+    icon: 'error',
+    html: `
+        <div style="text-align:left;">
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <p style="margin:5px 0;">
+                        <b>{{ field.label }}:</b> {{ error }}
+                    </p>
+                {% endfor %}
+            {% endfor %}
+        </div>
+    `,
+    confirmButtonText: 'Entendido',
+    confirmButtonColor: '#3085d6',
+    background: '#fff',
+    backdrop: `
+        rgba(0,0,0,0.6)
+    `,
+    allowOutsideClick: false
+});
+
+{% endif %}
+
+</script>
+
+{% endblock %}

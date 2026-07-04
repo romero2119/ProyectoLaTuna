@@ -1,0 +1,155 @@
+{% extends "main.html" %}
+{% load static %}
+{% block Contenido %}
+
+  <div style="margin-bottom:15px; display:flex; gap:10px;">
+    <a href="{% url 'app:exportar_compras_pdf' %}" title="Exportar PDF" class="btn btn-danger btn-xs btn-exportar">
+      <i class="fas fa-file-pdf"></i> Exportar PDF
+    </a>
+
+    <a href="{% url 'app:exportar_compras_excel' %}" title="Exportar Excel" class="btn btn-success btn-xs btn-exportar">
+      <i class="fas fa-file-excel"></i> Exportar Excel
+    </a>
+    <a href="{{crear_url}}" class="btn btn-success btn-xs">
+      <i class="fas fa-plus"></i> Crear nueva compra
+    </a>
+  </div>
+  <form method="GET" style="margin-bottom:15px; display:flex; gap:10px;">
+    <input
+        type="text"
+        name="buscar"
+        value="{{ buscar }}"
+        class="form-control"
+        placeholder="Buscar proveedor, usuario, producto..."
+        style="max-width:350px;"
+    >
+
+    <button type="submit" class="btn btn-primary btn-xs">
+        <i class="fas fa-search"></i> Buscar
+    </button>
+
+    <a href="{% url 'app:listar_compras' %}" class="btn btn-secondary btn-xs">
+        <i class="fas fa-times"></i> Limpiar
+    </a>
+</form>
+  
+
+  <div class="tabla-wrapper">
+    <table class="tabla" id="tabla">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Proveedor</th>
+          <th>Usuario</th>
+          <th>Artículo</th>
+          <th>Fecha</th>
+          <th>Total</th>
+          <th>Editar</th>
+          <th>Eliminar</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in object_list %}
+        <tr>
+          <td>{{ u.id_compra }}</td>
+          <td>{{ u.proveedor }}</td>
+          <td>{{ u.usuario }}</td>
+          <td>{{ u.articulo }}</td>
+          <td>{{ u.fecha_compra }}</td>
+          <td>{{ u.total_compra }}</td>
+          <td>
+            <a href="{% url 'app:editar_compra' u.id_compra %}" title="Editar" class="btn btn-primary btn-xs"><i class="fas fa-edit"></i></a>
+          </td>
+          <td>
+            <a href="{% url 'app:eliminar_compra' u.id_compra %}" title="Eliminar" class="btn btn-danger btn-xs"><i class="fas fa-trash"></i></a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9" class="text-center">No se encontraron compras.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+
+  <!-- PAGINACIÓN -->
+  {% if is_paginated %}
+  <div style="display:flex; justify-content:center; margin-top:15px; gap:5px;">
+    {% if page_obj.has_previous %}
+      <a href="?page=1" title="Primera" class="btn btn-secondary btn-xs">« Primera</a>
+      <a href="?page={{ page_obj.previous_page_number }}" title="Anterior" class="btn btn-secondary btn-xs">‹ Anterior</a>
+    {% endif %}
+
+    {% for num in paginator.page_range %}
+      {% if page_obj.number == num %}
+        <span class="btn btn-primary btn-xs">{{ num }}</span>
+      {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <a href="?page={{ num }}" title="Página {{ num }}" class="btn btn-secondary btn-xs">{{ num }}</a>
+      {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}" title="Siguiente" class="btn btn-secondary btn-xs">Siguiente ›</a>
+      <a href="?page={{ paginator.num_pages }}" title="Última" class="btn btn-secondary btn-xs">Última »</a>
+    {% endif %}
+  </div>
+  <div title="Información de paginación" style="text-align:center; margin-top:8px; color:#888; font-size:0.85em;">
+    Página {{ page_obj.number }} de {{ paginator.num_pages }} — {{ paginator.count }} registros en total
+  </div>
+  {% endif %}
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+
+      {% if messages %}
+          {% for message in messages %}
+              Swal.fire({
+                  icon: 'success',
+                  title: '¡Listo!',
+                  text: '{{ message|escapejs }}',
+                  confirmButtonColor: '#2e8b57',
+                  confirmButtonText: 'Aceptar',
+                  allowOutsideClick: false
+              });
+          {% endfor %}
+      {% endif %}
+
+      function mostrarAlerta(mensaje) {
+          Swal.fire({
+              icon: 'warning',
+              title: 'Sin resultados',
+              text: mensaje,
+              confirmButtonColor: '#e53935',
+              confirmButtonText: 'Entendido',
+              allowOutsideClick: false
+          });
+      }
+
+
+      document.querySelectorAll('.btn-exportar').forEach(function (btn) {
+          btn.addEventListener('click', function (e) {
+              const hayCompras = {{ object_list|length|default:0 }} > 0;
+
+              if (!hayCompras) {
+                  e.preventDefault();
+                  e.stopImmediatePropagation();
+
+                  let mensaje = "No hay compras para exportar.";
+
+                  // Si quieres mostrar filtros en el mensaje (opcional)
+                  const filtroProveedor = "{{ request.GET.proveedor|escapejs }}";  // cambia si usas otro nombre
+                  if (filtroProveedor) {
+                      mensaje = `No se encontraron compras del proveedor "${filtroProveedor}".`;
+                  }
+
+                  mostrarAlerta(mensaje);
+              }
+          });
+      });
+
+  });
+  </script>
+
+{% endblock %}

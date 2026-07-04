@@ -1,0 +1,53 @@
+{% extends 'main.html' %}
+{% load widget_tweaks %}
+
+{% block Contenido %}
+
+<form method="post" action=".">
+    <div class="card card-default">
+
+
+
+        {% csrf_token %}
+        {% if form.errors %}
+        <div class="alert alert-danger alert-dismissible"><button type="button" class="close" data-dismiss="alert"
+                aria-hidden="true">×</button>{{ form.errors }}
+            <h5><i class="icon fas fa-ban"></i> Alert!</h5>
+        </div>
+        {% endif %}
+        {% for field in form.visible_fields %}
+        <div class="form-group"></div>
+        <label for='name'>{{field.label}}:</label>
+        {{ field|add_class:"form-control"|attr:"autocomplete:off" }}
+    </div>
+    {% endfor %}
+
+    <div class="card-footer">
+        <button type="submit" class="btn btn-primary btn-xs">
+            <i class="fas fa-plus"></i> Guardar registro
+        </button>
+
+        <a href="{{ listar_url }}" class="btn btn-primary btn-xs">
+            <i class="fas fa-times"></i> Cancelar
+        </a>
+        
+    </div>
+    </div>
+
+</form>
+
+
+{% endblock %}
+ 
+{% block js %}
+    
+        <script>
+            {% if form.errors %}
+            Swal.fire({
+                title: "Error!",
+                text: "Verificar los campos!",
+                icon: "error"
+            });
+            {% endif %}
+        </script>
+        {% endblock %}

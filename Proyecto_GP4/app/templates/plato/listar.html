@@ -1,0 +1,84 @@
+{% extends "main.html" %}
+{% load static %}
+
+{% block Contenido %}
+
+<div class="tabla-wrapper">
+
+    <form method="GET" class="buscador" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:15px;">
+
+        <input
+            type="text"
+            name="buscar"
+            placeholder="Buscar por nombre de plato"
+            value="{{ request.GET.buscar }}"
+            class="form-control"
+            style="width:300px;">
+
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-search"></i> Buscar
+        </button>
+
+        <div style="margin-left:auto; display:flex; gap:10px;">
+
+            <a href="{% url 'app:exportar_plato_pdf' %}?buscar={{ request.GET.buscar }}"
+               class="btn btn-danger btn-exportar">
+                <i class="fas fa-file-pdf"></i> Exportar PDF
+            </a>
+
+            <a href="{% url 'app:exportar_plato_excel' %}?buscar={{ request.GET.buscar }}"
+               class="btn btn-success btn-exportar">
+                <i class="fas fa-file-excel"></i> Exportar Excel
+            </a>
+
+            <a href="{{ crear_url }}" class="btn btn-success">
+                <i class="fas fa-plus"></i> Crear nuevo plato
+            </a>
+
+        </div>
+    </form>
+    <table class="tabla" id="tabla">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Id Categoría</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Precio</th>
+                <th>Editar</th>
+                <th>Eliminar</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in object_list %}
+            <tr>
+                <td>{{ p.id_plato }}</td>
+                <td>{{ p.categoria_id }}</td>
+                <td>{{ p.nombre }}</td>
+                <td>{{ p.descripcion }}</td>
+                <td>${{ p.precio }}</td>
+
+                <td>
+                    <a href="{% url 'app:editar_plato' p.id_plato %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                </td>
+
+                <td>
+                    <a href="{% url 'app:eliminar_plato' p.id_plato %}" class="btn btn-danger btn-sm">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                </td>
+
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center">
+                    No hay platos registrados.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,721 @@
+{% extends 'main.html' %}
+{% load static %}
+
+
+{% block Contenido %}
+  <div class="container-fluid mt-4">
+    <script>
+document.addEventListener('DOMContentLoaded', function () {
+  {% if messages %}
+    {% for message in messages %}
+
+        Swal.fire({
+
+            icon:
+                '{% if message.tags == "error" %}error{% elif message.tags == "warning" %}warning{% elif message.tags == "info" %}info{% else %}success{% endif %}',
+
+            title:
+                '{% if message.tags == "error" %}Error{% elif message.tags == "warning" %}Atención{% elif message.tags == "info" %}Información{% else %}¡Listo!{% endif %}',
+
+            text: '{{ message|escapejs }}',
+
+            confirmButtonText: 'Aceptar',
+
+            confirmButtonColor:
+                '{% if message.tags == "error" %}#dc3545{% elif message.tags == "warning" %}#ffc107{% elif message.tags == "info" %}#0dcaf0{% else %}#198754{% endif %}',
+
+            allowOutsideClick: false
+
+        });
+
+    {% endfor %}
+{% endif %}
+
+    function mostrarAlerta(mensaje) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Sin resultados',
+            text: mensaje,
+            confirmButtonColor: '#e53935',
+            confirmButtonText: 'Entendido',
+            allowOutsideClick: false
+        });
+    }
+
+
+    document.querySelectorAll('.btn-exportar').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            const hayVentas = {{ ventas|length|default:0 }} > 0;
+
+            if (!hayVentas) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+
+                const filtroUsuario = "{{ request.GET.usuario|escapejs }}";
+                const filtroFecha   = "{{ request.GET.fecha|escapejs }}";
+
+                let mensaje = "No hay ventas para exportar.";
+
+                if (filtroUsuario && filtroFecha) {
+                    mensaje = `No se encontraron ventas del usuario "${filtroUsuario}" en la fecha ${filtroFecha}.`;
+                } else if (filtroUsuario) {
+                    mensaje = `No se encontraron ventas del usuario "${filtroUsuario}".`;
+                } else if (filtroFecha) {
+                    mensaje = `No se encontraron ventas para la fecha ${filtroFecha}.`;
+                }
+
+                mostrarAlerta(mensaje);
+            }
+        });
+    });
+
+});
+</script>
+  
+
+    <!-- ESTADO DE CONEXION -->
+    <div class="row justify-content-center mb-4">
+      <div class="col-md-8">
+        <div class="card border-{% if mysql_conectado %}
+            success
+          {% else %}
+            danger
+          {% endif %}">
+          <div class="card-body text-center">
+            <h5 class="card-title">
+              <i class="bi bi-{% if mysql_conectado %}
+                  check-circle-fill text-success
+                {% else %}
+                  x-circle-fill text-danger
+                {% endif %}">
+
+              </i>
+              Estado de Conexion MySQL
+            </h5>
+            <p class="card-text">
+              {% if mysql_conectado %}
+                <span class="text-success">Conectado correctamente</span>
+              {% else %}
+                <span class="text-danger">No se puede conectar a MySQL</span>
+              {% endif %}
+            </p>
+            {% if not mysql_conectado %}
+              <p class="small text-muted">Verifica que MySQL este ejecutandose o el user y pass sean validos</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row justify-content-center">
+      <!-- RESPALDO COMPLETO -->
+      <div class="col-md-6 col-lg-5 mb-4">
+        <div class="card border-primary shadow {% if not mysql_conectado %}opacity-50{% endif %}">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-download"></i> Descargar Respaldo Completo</h5>
+          </div>
+          <div class="card-body text-center">
+            <p class="text-muted mb-3">Descarga un respaldo completo</p>
+            <p class="small mb-4">Incluye todas las tablas y datos</p>
+            {% if mysql_conectado %}
+              <form method="post" action="{% url 'app:backup' %}" class="backup-form">
+                {% csrf_token %}
+                <input type="hidden" name="accion" value="backup_completo" />
+                <button type="submit" class="btn btn-primary btn-lg w-100"><i class="bi bi-download me-2"></i> Descargar SQL</button>
+              </form>
+            {% else %}
+              <button type="button" class="btn btn-secondary btn-lg w-100" disabled><i class="bi bi-x-circle me-2"></i> MySQL No Conectado</button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- RESTAURAR DATOS -->
+      <div class="col-md-6 col-lg-5 mb-4">
+        <div class="card border-success shadow {% if not mysql_conectado %}opacity-50{% endif %}">
+          <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="bi bi-upload"></i> Restaurar Base de Datos</h5>
+          </div>
+          <div class="card-body text-center">
+            <p class="text-muted mb-3">Restaura la BD desde un archivo SQL</p>
+            <p class="small text-danger mb-4">
+              <strong>X Cuidado:</strong> Esto sobrescribe todos los datos
+            </p>
+            {% if mysql_conectado %}
+              <div id="zona-carga" class="border-2 border-dashed p-4 text-center rounded" style="cursor: pointer; background-color: #f8f9fa; border-color: #28a745;">
+                <input type="file" id="archivo-respaldo" name="archivo" accept=".sql" style="display: none;" />
+                <i class="bi bi-cloud-upload text-success" style="font-size: 3rem;"></i>
+                <p class="mb-0 mt-3 fw-bold">Arrastra un archivo .sql aqui</p>
+                <p class="small text-muted mt-1">o haz clic para seleccionar</p>
+              </div>
+            {% else %}
+              <div class="border-2 border-dashed p-4 text-center rounded bg-light">
+                <i class="bi bi-x-circle text-secondary" style="font-size: 3rem;"></i>
+                <p class="mb-0 mt-3 fw-bold text-muted">MySQL No Conectado</p>
+                <p class="small text-muted mt-1">Conecta MySQL para restaurar</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BACKUP POR MODULO -->
+    <div class="row justify-content-center mt-2">
+      <div class="col-md-10">
+        <div class="card border-warning shadow">
+          <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0"><i class="bi bi-archive"></i> Backup por Módulo</h5>
+          </div>
+          <div class="card-body">
+            <p class="text-muted mb-4">Descarga el respaldo individual de cada módulo del sistema.</p>
+            <div class="row text-center">
+              <!-- VENTAS -->
+              <div class="col-md-4 mb-3">
+                <div class="card border-primary h-100">
+                  <div class="card-body">
+                    <i class="bi bi-cart text-primary" style="font-size:2rem;"></i>
+                    <h6 class="mt-2">Ventas</h6>
+                    <p class="small text-muted">Exporta la tabla de ventas</p>
+                    {% if mysql_conectado %}
+                      <form method="post" action="{% url 'app:backup_ventas' %}" class="backup-form">
+                        {% csrf_token %}
+                        
+                        <button type="submit" class="btn btn-primary btn-sm w-100"><i class="bi bi-download me-1"></i> Descargar</button>
+                      </form>
+                    {% else %}
+                      <button class="btn btn-secondary btn-sm w-100" disabled>Sin conexión</button>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- USUARIOS -->
+              <div class="col-md-4 mb-3">
+                <div class="card border-primary h-100">
+                  <div class="card-body">
+                    <i class="bi bi-cart text-primary" style="font-size:2rem;"></i>
+                    <h6 class="mt-2">Usuarios</h6>
+                    <p class="small text-muted">Exporta la tabla de usuarios</p>
+                    {% if mysql_conectado %}
+                      <form method="post" action="{% url 'usuarios:backup_usuarios' %}" class="backup-form">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary btn-sm w-100"><i class="bi bi-download me-1"></i> Descargar</button>
+                      </form>
+                    {% else %}
+                      <button class="btn btn-secondary btn-sm w-100" disabled>Sin conexión</button>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- PAGOS -->
+              <div class="col-md-4 mb-3">
+                <div class="card border-success h-100">
+                  <div class="card-body">
+                    <i class="bi bi-credit-card text-success" style="font-size:2rem;"></i>
+                    <h6 class="mt-2">Pagos</h6>
+                    <p class="small text-muted">Exporta la tabla de pagos</p>
+                    {% if mysql_conectado %}
+                      <form method="post" action="{% url 'app:backup_pagos' %}" class="backup-form">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success btn-sm w-100"><i class="bi bi-download me-1"></i> Descargar</button>
+                      </form>
+                    {% else %}
+                      <button class="btn btn-secondary btn-sm w-100" disabled>Sin conexión</button>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- PROVEEDORES -->
+              <div class="col-md-4 mb-3">
+                <div class="card border-success h-100">
+                  <div class="card-body">
+                    <i class="bi bi-credit-card text-success" style="font-size:2rem;"></i>
+                    <h6 class="mt-2">Proveedores</h6>
+                    <p class="small text-muted">Exporta la tabla de proveedores</p>
+                    {% if mysql_conectado %}
+                      <form method="post" action="{% url 'app:backup_proveedores' %}" class="backup-form">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success btn-sm w-100"><i class="bi bi-download me-1"></i> Descargar</button>
+                      </form>
+                    {% else %}
+                      <button class="btn btn-secondary btn-sm w-100" disabled>Sin conexión</button>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- FACTURAS -->
+              <div class="col-md-4 mb-3">
+                <div class="card border-danger h-100">
+                  <div class="card-body">
+                    <i class="bi bi-file-earmark-text text-danger" style="font-size:2rem;"></i>
+                    <h6 class="mt-2">Facturas</h6>
+                    <p class="small text-muted">Exporta la tabla de facturas</p>
+                    {% if mysql_conectado %}
+                      <form method="post" action="{% url 'app:backup_facturas' %}" class="backup-form">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm w-100"><i class="bi bi-download me-1"></i> Descargar</button>
+                      </form>
+                    {% else %}
+                      <button class="btn btn-secondary btn-sm w-100" disabled>Sin conexión</button>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <!-- PRODUCTOS -->
+              <div class="col-md-4 mb-3">
+                <div class="card border-success h-100">
+                  <div class="card-body">
+                    <i class="bi bi-credit-card text-success" style="font-size:2rem;"></i>
+                    <h6 class="mt-2">Productos</h6>
+                    <p class="small text-muted">Exporta la tabla de productos</p>
+                    {% if mysql_conectado %}
+                      <form method="post" action="{% url 'app:backup_productos' %}" class="backup-form">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success btn-sm w-100"><i class="bi bi-download me-1"></i> Descargar</button>
+                      </form>
+                    {% else %}
+                      <button class="btn btn-secondary btn-sm w-100" disabled>Sin conexión</button>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- COMPRAS -->
+              <div class="col-md-4 mb-3">
+                <div class="card border-danger h-100">
+                  <div class="card-body">
+                    <i class="bi bi-file-earmark-text text-danger" style="font-size:2rem;"></i>
+                    <h6 class="mt-2">Compras</h6>
+                    <p class="small text-muted">Exporta la tabla de compras</p>
+                    {% if mysql_conectado %}
+                      <form method="post" action="{% url 'app:backup_compras' %}" class="backup-form">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm w-100"><i class="bi bi-download me-1"></i> Descargar</button>
+                      </form>
+                    {% else %}
+                      <button class="btn btn-secondary btn-sm w-100" disabled>Sin conexión</button>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- INSUMOS -->
+              <div class="col-md-4 mb-3">
+                <div class="card border-danger h-100">
+                  <div class="card-body">
+                    <i class="bi bi-file-earmark-text text-danger" style="font-size:2rem;"></i>
+                    <h6 class="mt-2">Insumos</h6>
+                    <p class="small text-muted">Exporta la tabla de insumos</p>
+                    {% if mysql_conectado %}
+                      <form method="post" action="{% url 'app:backup_insumos' %}" class="backup-form">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm w-100"><i class="bi bi-download me-1"></i> Descargar</button>
+                      </form>
+                    {% else %}
+                      <button class="btn btn-secondary btn-sm w-100" disabled>Sin conexión</button>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- PEDIDOS -->
+              <div class="col-md-4 mb-3">
+                <div class="card border-warning h-100">
+                  <div class="card-body">
+                    <i class="bi bi-cart-check text-warning" style="font-size:2rem;"></i>
+                    <h6 class="mt-2">Pedidos</h6>
+                    <p class="small text-muted">Exporta la tabla de pedidos</p>
+                    {% if mysql_conectado %}
+                      <form method="post" action="{% url 'app:backup_pedidos' %}" class="backup-form">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-warning btn-sm w-100"><i class="bi bi-download me-1"></i> Descargar</button>
+                      </form>
+                    {% else %}
+                      <button class="btn btn-secondary btn-sm w-100" disabled>Sin conexión</button>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- CLIENTES -->
+              <div class="col-md-4 mb-3">
+                <div class="card border-info h-100">
+                  <div class="card-body">
+                    <i class="bi bi-people text-info" style="font-size:2rem;"></i>
+                    <h6 class="mt-2">Clientes</h6>
+                    <p class="small text-muted">Exporta la tabla de clientes</p>
+                    {% if mysql_conectado %}
+                      <form method="post" action="{% url 'app:backup_clientes' %}" class="backup-form">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-info btn-sm w-100"><i class="bi bi-download me-1"></i> Descargar</button>
+                      </form>
+                    {% else %}
+                      <button class="btn btn-secondary btn-sm w-100" disabled>Sin conexión</button>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INFORMACION -->
+    <div class="row justify-content-center mt-4">
+      <div class="col-md-10">
+        <div class="card border-info">
+          <div class="card-header bg-info text-white">
+            <h6 class="mb-0"><i class="bi bi-info-circle"></i> Informacion</h6>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <h6>Requisitos:</h6>
+                <ul class="small mb-0">
+                  <li>MySQL instalado localmente</li>
+                  <li>Usuario y contraseña configurados</li>
+                </ul>
+              </div>
+              <div class="col-md-6">
+                <h6>Archivos generados:</h6>
+                <ul class="small mb-0">
+                  <li>backup_completo_YYYYMMDD_HHMMSS.sql</li>
+                  <li>Contiene toda la estructura y datos</li>
+                  <li>Editable con cualquier editor de texto</li>
+                  <li>Reutilizable para restaurar en otro servidor</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- SCRIPT PARA RESTAURACION -->
+  {% if mysql_conectado %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    console.log("SCRIPT BACKUP CARGADO");
+
+    let formularioActual = null;
+    let restaurando = false;
+
+    // ==========================
+    // ELEMENTOS
+    // ==========================
+    const zonaCarga = document.getElementById("zona-carga");
+    const inputArchivo = document.getElementById("archivo-respaldo");
+
+    const modalElement = document.getElementById("modalBackup");
+    const passwordInput = document.getElementById("backup_password");
+    const btnConfirmar = document.getElementById("btnConfirmarBackup");
+
+    if (!modalElement || !passwordInput || !btnConfirmar) {
+        console.error("No se encontró el modal.");
+        return;
+    }
+
+    const modalBackup = new bootstrap.Modal(modalElement);
+
+    // ==========================
+    // BACKUP
+    // ==========================
+    document.querySelectorAll(".backup-form").forEach(function (formulario) {
+
+        formulario.addEventListener("submit", function (e) {
+
+            e.preventDefault();
+
+            restaurando = false;
+
+            formularioActual = this;
+
+            passwordInput.value = "";
+
+            modalBackup.show();
+
+        });
+
+    });
+
+    // ==========================
+    // RESTAURAR
+    // ==========================
+    if (zonaCarga && inputArchivo) {
+
+        zonaCarga.addEventListener("click", function () {
+
+            inputArchivo.click();
+
+        });
+
+        inputArchivo.addEventListener("change", function () {
+
+            if (this.files.length === 0)
+                return;
+
+            restaurando = true;
+
+            zonaCarga.innerHTML = `
+                <i class="bi bi-file-earmark-check text-success"
+                    style="font-size:3rem;"></i>
+
+                <p class="mt-3 fw-bold">${this.files[0].name}</p>
+            `;
+
+            passwordInput.value = "";
+
+            modalBackup.show();
+
+        });
+
+        zonaCarga.addEventListener("dragover", function (e) {
+
+            e.preventDefault();
+
+            zonaCarga.style.backgroundColor = "#e8f5e9";
+
+        });
+
+        zonaCarga.addEventListener("dragleave", function () {
+
+            zonaCarga.style.backgroundColor = "#f8f9fa";
+
+        });
+
+        zonaCarga.addEventListener("drop", function (e) {
+
+            e.preventDefault();
+
+            zonaCarga.style.backgroundColor = "#f8f9fa";
+
+            const archivos = e.dataTransfer.files;
+
+            if (archivos.length === 0)
+                return;
+
+            restaurando = true;
+
+            inputArchivo.files = archivos;
+
+            zonaCarga.innerHTML = `
+                <i class="bi bi-file-earmark-check text-success"
+                    style="font-size:3rem;"></i>
+
+                <p class="mt-3 fw-bold">${archivos[0].name}</p>
+            `;
+
+            passwordInput.value = "";
+
+            modalBackup.show();
+
+        });
+
+    }
+
+    // ==========================
+    // CONFIRMAR
+    // ==========================
+    btnConfirmar.addEventListener("click", async function () {
+
+        const password = passwordInput.value.trim();
+
+        if (!password) {
+
+            Swal.fire({
+                icon: "warning",
+                title: "Contraseña",
+                text: "Debe ingresar la contraseña."
+            });
+
+            return;
+
+        }
+
+        // ====================================
+        // RESTAURAR
+        // ====================================
+        if (restaurando) {
+
+            const archivo = inputArchivo.files[0];
+
+            if (!archivo) {
+
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "Seleccione un archivo SQL."
+                });
+
+                return;
+
+            }
+
+            const formData = new FormData();
+
+            formData.append("archivo", archivo);
+            formData.append("backup_password", password);
+
+            try {
+
+                const respuesta = await fetch("{% url 'app:restaurar_datos' %}", {
+
+                    method: "POST",
+
+                    headers: {
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+
+                    body: formData
+
+                });
+
+                const datos = await respuesta.json();
+
+                modalBackup.hide();
+
+                restaurando = false;
+
+                if (respuesta.ok) {
+
+                    Swal.fire({
+                        icon: "success",
+                        title: "Restauración completada",
+                        text: datos.mensaje
+                    }).then(() => location.reload());
+
+                } else {
+
+                    Swal.fire({
+                        icon: "error",
+                        title: "Error",
+                        text: datos.error
+                    });
+
+                }
+
+            } catch (error) {
+
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: error.toString()
+                });
+
+            }
+
+            return;
+
+        }
+
+        // ====================================
+        // BACKUP
+        // ====================================
+
+        const anterior = formularioActual.querySelector(
+            'input[name="backup_password"]'
+        );
+
+        if (anterior)
+            anterior.remove();
+
+        const hidden = document.createElement("input");
+
+        hidden.type = "hidden";
+        hidden.name = "backup_password";
+        hidden.value = password;
+
+        formularioActual.appendChild(hidden);
+
+        modalBackup.hide();
+
+        formularioActual.submit();
+
+    });
+
+});
+</script>
+
+  {% endif %}
+
+  <style>
+    .card {
+      transition: transform 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+    }
+    .border-2 {
+      border-width: 2px !important;
+    }
+    .border-dashed {
+      border-style: dashed !important;
+    }
+    #zona-carga:hover {
+      background-color: #d4edda !important;
+      border-color: #198754 !important;
+    }
+    
+  </style>
+
+  <!-- MODAL CONTRASEÑA -->
+<div class="modal fade" id="modalBackup" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-shield-lock"></i>
+                    Contraseña de Seguridad
+                </h5>
+
+                <button
+                    type="button"
+                    class="btn-close btn-close-white"
+                    data-bs-dismiss="modal">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <input
+                    type="password"
+                    id="backup_password"
+                    class="form-control"
+                    placeholder="Ingrese la contraseña">
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal">
+
+                    Cancelar
+
+                </button>
+
+                <button
+                    type="button"
+                    class="btn btn-primary"
+                    id="btnConfirmarBackup">
+
+                    Confirmar
+
+                </button>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

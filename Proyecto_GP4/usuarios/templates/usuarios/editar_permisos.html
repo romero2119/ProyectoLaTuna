@@ -1,0 +1,104 @@
+{% extends 'main.html' %}
+{% load static %}
+
+{% block Contenido %}
+<div class="card mb-3 shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h5 style="margin: 0;"><i class="fas fa-lock"></i> {{ titulo }}</h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="fas fa-info-circle"></i> Selecciona los permisos que deseas asignar a este rol.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <form method="post" id="form_permisos">
+            {% csrf_token %}
+            
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <h6><strong>Grupo:</strong> {{ grupo.name }}</h6>
+                    <p class="text-muted">Permisos actualmente asignados: <span class="badge bg-success">{{ total_permisos }}</span></p>
+                </div>
+            </div>
+
+            <ul class="nav nav-tabs" id="tabs_permisos" role="tablist">
+                {% for app, permisos in permisos_por_app.items %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link {% if forloop.first %}active{% endif %}" 
+                                id="tab_{{ app }}" 
+                                data-bs-toggle="tab" 
+                                data-bs-target="#content_{{ app }}" 
+                                type="button" 
+                                role="tab">
+                            {{ app|upper }} <span class="badge bg-secondary ms-1">{{ permisos|length }}</span>
+                        </button>
+                    </li>
+                {% endfor %}
+            </ul>
+
+            <div class="tab-content" id="content_tabs">
+                {% for app, permisos in permisos_por_app.items %}
+                    <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" 
+                         id="content_{{ app }}" 
+                         role="tabpanel">
+                        <div class="p-3">
+                            <div class="row">
+                                {% for permiso in permisos %}
+                                    <div class="col-md-6 mb-3">
+                                        <div class="form-check border rounded p-2 {% if permiso.asignado %}bg-light{% endif %}">
+                                            <input 
+                                                class="form-check-input" 
+                                                type="checkbox" 
+                                                name="permisos" 
+                                                value="{{ permiso.id }}"
+                                                id="perm_{{ permiso.id }}"
+                                                {% if permiso.asignado %}checked{% endif %}
+                                            >
+                                            <label class="form-check-label" for="perm_{{ permiso.id }}">
+                                                <strong>{{ permiso.nombre }}</strong>
+                                                <br>
+                                                <small class="text-muted">{{ permiso.descripcion }}</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="mt-4 border-top pt-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Guardar Cambios
+                </button>
+                <a href="{% url 'usuarios:listar_permisos' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Script para mostrar y contar permisos seleccionados
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('input[name="permisos"]');
+    const form = document.getElementById('form_permisos');
+    
+    function updateCount() {
+        const checked = document.querySelectorAll('input[name="permisos"]:checked').length;
+        console.log('Permisos seleccionados: ' + checked);
+    }
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateCount);
+    });
+});
+</script>
+{% endblock %}
+
+{% block js %}
+<script src="{% static 'lib/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+{% endblock %}

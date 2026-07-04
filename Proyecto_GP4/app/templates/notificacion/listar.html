@@ -1,0 +1,141 @@
+{% extends "main.html" %}
+{% load static %}
+{% block Contenido %}
+
+
+<div class="tabla-wrapper">
+
+  <!-- FILTROS Y BOTÓN MARCAR TODAS -->
+  <div class="mb-3 d-flex align-items-center flex-wrap" style="gap:10px; padding: 0 10px;">
+
+    <a href="{% url 'app:listar_notificaciones' %}"
+       title="Todas"
+       class="btn btn-sm {% if not filtro %}btn-dark{% else %}btn-outline-dark{% endif %}"
+       style="border-radius:20px;">
+      Todas
+    </a>
+
+    <a href="?filtro=no_leidas"
+       title="No leídas"
+       class="btn btn-sm {% if filtro == 'no_leidas' %}btn-danger{% else %}btn-outline-danger{% endif %}"
+       style="border-radius:20px;">
+      No leídas
+      {% if contador_no_leidas > 0 %}
+        <span style="background:white; color:red; border-radius:50%; padding:1px 6px; font-size:11px; margin-left:4px; font-weight:700;">
+          {{ contador_no_leidas }}
+        </span>
+      {% endif %}
+    </a>
+
+    <a href="?filtro=leidas"
+       title="Leídas"
+       class="btn btn-sm {% if filtro == 'leidas' %}btn-secondary{% else %}btn-outline-secondary{% endif %}"
+       style="border-radius:20px;">
+      Leídas
+    </a>
+
+    <!-- Marcar todas — form independiente, FUERA de cualquier otro form -->
+    <form method="post" action="{% url 'app:marcar_leidas' %}" style="margin-left:auto;">
+      {% csrf_token %}
+      <button type="submit" title="Marcar todas como leídas" class="btn btn-sm btn-outline-success" style="border-radius:20px;">
+         Marcar todas como leídas
+      </button>
+    </form>
+
+  </div>
+
+  <!-- TABLA -->
+  <table class="tabla" id="tabla">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Tipo</th>
+        <th>Mensaje</th>
+        <th>Producto</th>
+        <th>Insumo</th>
+        <th>Fecha</th>
+        <th>Estado</th>
+        <th>Marcar leída</th>
+        <th>Eliminar</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for n in notificaciones %}
+      <tr style="background: {% if not n.leido %}#fffbe6{% else %}white{% endif %};">
+
+        <td>{{ n.id_notificacion }}</td>
+
+        <td>
+          <span style="font-size:13px; font-weight: {% if not n.leido %}600{% else %}normal{% endif %};">
+            {% if "SIN STOCK" in n.mensaje %}
+            {% elif "CRÍTICO" in n.mensaje %}
+            {% elif "Stock bajo" in n.tipo_notificacion %}
+            {% elif "creado" in n.tipo_notificacion %}
+            {% elif "editado" in n.tipo_notificacion %}
+            {% elif "eliminado" in n.tipo_notificacion %}
+            {% else %}{% endif %}
+            {{ n.tipo_notificacion }}
+          </span>
+        </td>
+
+        <td style="font-size:13px; color:#444; font-weight: {% if not n.leido %}600{% else %}normal{% endif %};">
+          {{ n.mensaje }}
+        </td>
+
+        <td style="font-size:13px;">
+          {% if n.producto %}{{ n.producto.nombre }}{% else %}<span style="color:#ccc;">—</span>{% endif %}
+        </td>
+
+        <td style="font-size:13px;">
+          {% if n.insumo %}{{ n.insumo.nombre }}{% else %}<span style="color:#ccc;">—</span>{% endif %}
+        </td>
+
+        <td style="font-size:12px; color:#888;">
+          {{ n.fecha|date:"d/m/Y H:i" }}
+          <br>
+          <span style="font-size:11px; color:#aaa;">{{ n.fecha|timesince }} atrás</span>
+        </td>
+
+        <td>
+          {% if n.leido %}
+            <span class="badge bg-secondary">Leída</span>
+          {% else %}
+            <span class="badge bg-danger">No leída</span>
+          {% endif %}
+        </td>
+
+        <td>
+          {% if not n.leido %}
+          <form method="post" action="{% url 'app:marcar_leida' n.id_notificacion %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-xs btn-outline-success" title="Marcar como leída">
+              <i class="fas fa-check"></i>
+            </button>
+          </form>
+          {% else %}
+            <span style="color:#ccc; font-size:12px;">✓</span>
+          {% endif %}
+        </td>
+
+        
+
+        <td>
+          <a href="{% url 'app:eliminar_notificacion' n.id_notificacion %}" title="Eliminar" class="btn btn-danger btn-xs">
+            <i class="fas fa-trash"></i>
+          </a>
+        </td>
+
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="10" style="text-align:center; padding:40px; color:#aaa;">
+          <div style="font-size:36px;"></div>
+          <p>No hay notificaciones</p>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

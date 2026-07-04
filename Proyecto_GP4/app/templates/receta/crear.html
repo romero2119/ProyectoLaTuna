@@ -1,0 +1,179 @@
+{% extends 'main.html' %}
+{% load widget_tweaks %}
+
+{% block Contenido %}
+
+<form method="post">
+    {% csrf_token %}
+
+    <div class="card card-default">
+
+        <div class="card-header">
+            <h4>Crear Receta</h4>
+        </div>
+
+        <div class="card-body">
+
+            <!-- FORM RECETA -->
+            <div class="form-group">
+                {{ form.plato.label_tag }}
+                {{ form.plato }}
+            </div>
+
+            <hr>
+
+            <h5>Insumos</h5>
+            
+            {{ formset.management_form }}
+
+            <div id="formset-container">
+                {% for form in formset %}
+                    <div class="formset-row mb-3 border p-3 rounded">
+                        {{ form.id }}
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.insumo.label_tag }}
+                                {{ form.insumo }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.cantidad.label_tag }}
+                                {{ form.cantidad }}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <button type="button" class="btn btn-success" id="add-form" title="Agregar insumo">
+                + Agregar insumo
+            </button>
+
+        </div>
+
+        <div class="card-footer">
+            <button type="submit" class="btn btn-primary" title="Guardar receta">
+                Guardar
+            </button>
+
+            <a href="{% url 'app:listar_receta' %}" class="btn btn-danger" title="Cancelar">
+                Cancelar
+            </a>
+        </div>
+
+    </div>
+
+</form>
+
+{% endblock %}
+
+{% block js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const addButton = document.getElementById('add-form');
+    const container = document.getElementById('formset-container');
+    const totalForms = document.querySelector('[name$="-TOTAL_FORMS"]');
+
+    addButton.addEventListener('click', function () {
+
+        let formCount = parseInt(totalForms.value);
+
+        const firstForm = document.querySelector('.formset-row');
+        const newForm = firstForm.cloneNode(true);
+
+        // 🔥 Limpiar valores
+        newForm.querySelectorAll('input, select').forEach(input => {
+
+            if (input.type !== 'hidden') {
+                input.value = '';
+            }
+
+            // 🔥 Actualizar atributos correctamente
+            if (input.name) {
+                input.name = input.name.replace(/\d+/, formCount);
+            }
+
+            if (input.id) {
+                input.id = input.id.replace(/\d+/, formCount);
+            }
+        });
+
+        // 🔥 Actualizar labels
+        newForm.querySelectorAll('label').forEach(label => {
+            if (label.htmlFor) {
+                label.htmlFor = label.htmlFor.replace(/\d+/, formCount);
+            }
+        });
+
+        container.appendChild(newForm);
+
+        totalForms.value = formCount + 1;
+    });
+
+});
+</script>
+
+<script>
+{% if form.errors or formset.errors %}
+let texto = "";
+
+// errores del form
+{% for field, errors in form.errors.items %}
+    {% for error in errors %}
+        texto += `{{ error|escapejs }}\n`;
+    {% endfor %}
+{% endfor %}
+
+// errores del formset
+{% for f in formset %}
+    {% for field, errors in f.errors.items %}
+        {% for error in errors %}
+            texto += `{{ error|escapejs }}\n`;
+        {% endfor %}
+    {% endfor %}
+{% endfor %}
+
+Swal.fire({
+    title: "Error",
+    text: texto,
+    icon: "error",
+    confirmButtonText: "Aceptar"
+});
+{% endif %}
+</script>
+<script>
+{% if form.errors or formset.errors or form.non_field_errors %}
+let texto = "";
+
+// errores generales del form (non_field_errors)
+{% for error in form.non_field_errors %}
+    texto += `{{ error|escapejs }}\n`;
+{% endfor %}
+
+// errores por campo del form
+{% for field, errors in form.errors.items %}
+    {% for error in errors %}
+        texto += `{{ error|escapejs }}\n`;
+    {% endfor %}
+{% endfor %}
+
+// errores del formset
+{% for f in formset %}
+    {% for field, errors in f.errors.items %}
+        {% for error in errors %}
+            texto += `{{ error|escapejs }}\n`;
+        {% endfor %}
+    {% endfor %}
+{% endfor %}
+
+if (texto) {
+    Swal.fire({
+        title: "Error",
+        text: texto,
+        icon: "error",
+        confirmButtonText: "Aceptar"
+    });
+}
+{% endif %}
+</script>
+{% endblock %}

@@ -1,0 +1,208 @@
+{% extends "main.html" %}
+{% load static %}
+{% block Contenido %}
+
+<!-- BOTONES EXPORTAR -->
+<div style="margin-bottom:15px; display:flex; gap:10px;">
+  <a href="{% url 'app:exportar_productos_pdf' %}" class="btn btn-danger btn-xs btn-exportar">
+    <i class="fas fa-file-pdf"></i> Exportar PDF
+  </a>
+
+  <a href="{% url 'app:exportar_productos_excel' %}" class="btn btn-success btn-xs btn-exportar">
+    <i class="fas fa-file-excel"></i> Exportar Excel
+  </a>
+</div>
+
+<!-- ====================== FILTROS ====================== -->
+<div style="margin-bottom:20px; padding:15px; border:1px solid #ddd; border-radius:8px; background:#f8f9fa;">
+
+<form method="GET">
+
+  <div style="display:flex; flex-wrap:wrap; gap:15px; align-items:end;">
+
+    <!-- CATEGORIA -->
+    <div style="flex:1; min-width:180px;">
+      <label><strong>Categoría</strong></label>
+      <select name="categoria" class="form-control">
+
+        <option value="">Todas</option>
+
+        {% for c in categorias %}
+          <option value="{{ c.id_categoria }}"
+            {% if categoria_seleccionada == c.id_categoria|stringformat:"s" %}selected{% endif %}>
+            {{ c.nombre }}
+          </option>
+        {% endfor %}
+
+      </select>
+    </div>
+
+    <!-- STOCK BAJO -->
+    <div style="flex:1; min-width:180px;">
+      <label><strong>Stock bajo</strong></label>
+      <select name="stock_bajo" class="form-control">
+
+        <option value="">Todos</option>
+
+        <option value="1" {% if stock_bajo == "1" %}selected{% endif %}>
+          Menor a 10
+        </option>
+      </select>
+    </div>
+    
+    <!-- ORDEN -->
+    <div style="flex:1; min-width:180px;">
+      <label><strong>Orden por stock</strong></label>
+      <select name="orden" class="form-control">
+
+        <option value="">Ordenar</option>
+        <option value="asc" {% if orden == "asc" %}selected{% endif %}>
+          Menor a mayor
+        </option>
+        <option value="desc" {% if orden == "desc" %}selected{% endif %}>
+          Mayor a menor
+        </option>
+
+      </select>
+    </div>
+
+    <!-- BOTONES -->
+    <div style="display:flex; gap:8px;">
+      <button type="submit" class="btn btn-primary btn-sm">
+        <i class="fas fa-search"></i> Buscar
+      </button>
+
+      <a href="{% url 'app:listar_productos' %}" class="btn btn-secondary btn-sm">
+        Limpiar
+      </a>
+    </div>
+
+  </div>
+
+</form>
+
+</div>
+<!-- ====================== FIN FILTROS ====================== -->
+
+<!-- ====================== TABLA ====================== -->
+<div class="tabla-wrapper">
+<table class="tabla">
+
+<thead>
+<tr>
+  <th>#</th>
+  <th>Categoría</th>
+  <th>Nombre</th>
+  <th>Descripción</th>
+  <th>Unidad</th>
+  <th>Precio</th>
+  <th>Stock</th>
+  <th>Estado</th>
+  <th>Editar</th>
+  <th>Eliminar</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for u in object_list %}
+<tr>
+
+  <td>{{ u.id_producto }}</td>
+  <td>{{ u.categoria.nombre }}</td>
+  <td>{{ u.nombre }}</td>
+  <td>{{ u.descripcion }}</td>
+  <td>{{ u.unidad_de_medida }}</td>
+  <td>{{ u.precio }}</td>
+  <td>{{ u.stock }}</td>
+
+  <!-- ===== ESTADO STOCK===== -->
+  <td>
+    <span class="badge {{ u.estado_stock.clase }}">
+      {{ u.estado_stock.texto }}
+    </span>
+  </td>
+
+  <td>
+    <a href="{% url 'app:editar_producto' u.id_producto %}" class="btn btn-primary btn-xs">
+      <i class="fas fa-edit"></i>
+    </a>
+  </td>
+
+  <td>
+    <a href="{% url 'app:eliminar_producto' u.id_producto %}" class="btn btn-danger btn-xs">
+      <i class="fas fa-trash"></i>
+    </a>
+  </td>
+
+</tr>
+
+{% empty %}
+<tr>
+  <td colspan="10" class="text-center">
+    No se encontraron productos.
+  </td>
+</tr>
+{% endfor %}
+
+</tbody>
+
+</table>
+</div>
+
+<!-- ====================== CREAR ====================== -->
+<div class="card-footer">
+  <a href="{{ crear_url }}" class="btn btn-success btn-xs">
+    Crear nuevo producto
+  </a>
+</div>
+
+<!-- ====================== PAGINACIÓN ====================== -->
+{% if is_paginated %}
+<div style="display:flex; justify-content:center; margin-top:15px; gap:5px;">
+
+  {% if page_obj.has_previous %}
+    <a href="?page=1" class="btn btn-secondary btn-xs">« Primera</a>
+    <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary btn-xs">‹ Anterior</a>
+  {% endif %}
+
+  {% for num in paginator.page_range %}
+    {% if page_obj.number == num %}
+      <span class="btn btn-primary btn-xs">{{ num }}</span>
+    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+      <a href="?page={{ num }}" class="btn btn-secondary btn-xs">{{ num }}</a>
+    {% endif %}
+  {% endfor %}
+
+  {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary btn-xs">Siguiente ›</a>
+    <a href="?page={{ paginator.num_pages }}" class="btn btn-secondary btn-xs">Última »</a>
+  {% endif %}
+
+</div>
+
+<div style="text-align:center; margin-top:8px; color:#888; font-size:0.85em;">
+  Página {{ page_obj.number }} de {{ paginator.num_pages }} — {{ paginator.count }} registros
+</div>
+{% endif %}
+
+<!-- ====================== SWEETALERT ====================== -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  {% if messages %}
+    {% for message in messages %}
+      Swal.fire({
+        icon: '{% if message.tags == "success" %}success{% elif message.tags == "error" %}error{% elif message.tags == "warning" %}warning{% else %}info{% endif %}',
+        title: 'Mensaje',
+        text: '{{ message|escapejs }}',
+        timer: 3000,
+        showConfirmButton: false
+      });
+    {% endfor %}
+  {% endif %}
+
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "body.html" %}
+{% load static %} 
+
+{% block main %}
+<link rel="stylesheet" href="{% static 'css/chat.css' %}">
+
+<main>
+    <h4 class="titulo-principal"> 
+        <i class="fas fa-{{ icono }}"></i>
+        {{ titulo }}
+    </h4>
+  
+
+  <section class="Contenido">
+    {% block Contenido %}
+    {% endblock %}
+  </section>
+</main>
+
+<!--  BOTÓN FLOTANTE -->
+<div title="Chat IA" class="chat-toggle" onclick="toggleChat()">
+  IA
+</div>
+
+<!--  BOTÓN DE AYUDA -->
+<a href="{% static 'pdf/Manual.pdf' %}" target="_blank" class="btn-help" title="Manual de Usuario">
+  <i class="icon-help">?</i>
+</a>
+
+<!--  CHAT -->
+<div class="chat-container" id="chat-container">
+  <div id="chat-box" class="chat-box"></div>
+
+  <div class="chat-input">
+    <input type="text" id="input" placeholder="Escriba su mensaje bro...">
+    <button onclick="sendMessage()">Enviar</button>
+  </div>
+</div>
+
+
+{% include 'modales/perfil.html' %}
+
+
+<script>
+async function sendMessage() {
+    const input = document.getElementById("input");
+    const chatBox = document.getElementById("chat-box");
+
+    const message = input.value;
+
+    if (!message) return;
+
+    // Mostrar mensaje del usuario
+    chatBox.innerHTML += `
+        <div class="message user">${message}</div>
+    `;
+
+    input.value = "";
+
+    // Scroll automático
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    try {
+        const response = await fetch("/principal/chat_bot/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ message })
+        });
+
+        const data = await response.json();
+
+        // Mostrar respuesta del bot
+        chatBox.innerHTML += `
+            <div class="message bot">${data.response || "Sin respuesta..."}</div>
+        `;
+
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+    } catch (error) {
+        chatBox.innerHTML += `
+            <div class="message bot">Error al conectar </div>
+        `;
+    }
+}
+function toggleChat() {
+    const chat = document.getElementById("chat-container");
+    chat.classList.toggle("active");
+}
+</script>
+
+{% endblock %}

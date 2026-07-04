@@ -1,0 +1,85 @@
+{% extends "main.html" %}
+{% load static %}
+{% block Contenido %}
+<section class="menu-dashboard">
+    <a href="{% url 'app:listar_categorias' %}" class="card-dashboard">
+        <img title="Categorías" src="{% static 'imagenes/categorias.png' %}" alt="Categorías">
+        <p>CATEGORÍAS</p>
+    </a>
+
+    <a href="{% url 'app:listar_clientes' %}" class="card-dashboard">
+        <img title="Clientes" src="{% static 'imagenes/clientes.png' %}" alt="Clientes">
+        <p>CLIENTES</p>
+    </a>
+
+
+    <a href="{% url 'app:listar_compras' %}" class="card-dashboard">
+        <img title="Compras" src="{% static 'imagenes/compras.png' %}" alt="Compras">
+        <p>COMPRAS</p>
+    </a>
+
+
+    <a href="{% url 'app:listar_facturas' %}" class="card-dashboard">
+        <img title="Facturas" src="{% static 'imagenes/factura.png' %}" alt="Facturas">
+        <p>FACTURAS</p>
+    </a>
+
+    <a href="{% url 'app:listar_insumos' %}" class="card-dashboard">
+        <img title="Inventario" src="{% static 'imagenes/cajas.png' %}" alt="Inventario">
+        <p>INSUMOS</p>
+    </a>
+
+    <a href="{% url 'app:listar_menu' %}" class="card-dashboard">
+        <img title="Menús" src="{% static 'imagenes/menu.png' %}" alt="Menús">
+        <p>MENÚS</p>
+    </a>
+
+    <a href="{% url 'app:listar_mesas' %}" class="card-dashboard">
+        <img title="Mesas" src="{% static 'imagenes/mesas.png' %}" alt="Mesas">
+        <p>MESAS</p>
+    </a>
+
+    <a href="{% url 'app:listar_pagos' %}" class="card-dashboard">
+        <img title="Pagos" src="{% static 'imagenes/pagos.png' %}" alt="Pagos">
+        <p>PAGOS</p>
+    </a>
+
+
+    <a href="{% url 'app:listar_pedidos' %}" class="card-dashboard">
+        <img title="Pedidos" src="{% static 'imagenes/pedidos.png' %}" alt="Pedidos">
+        <p>PEDIDOS</p>
+    </a>
+
+    <a href="{% url 'app:listar_platos' %}" class="card-dashboard">
+        <img title="Platos" src="{% static 'imagenes/platos.png' %}" alt="Platos">
+        <p>PLATOS</p>
+    </a>
+
+    <a href="{% url 'app:listar_productos' %}" class="card-dashboard">
+        <img title="Productos"   src="{% static 'imagenes/productos.png' %}" alt="Productos">
+        <p>PRODUCTOS</p>
+    </a>
+
+    <a href="{% url 'app:listar_proveedores' %}" class="card-dashboard">
+        <img title="Proveedores" src="{% static 'imagenes/camion.png' %}" alt="Proveedores">
+        <p>PROVEEDORES</p>
+    </a>
+
+    <a href="{% url 'app:listar_receta' %}" class="card-dashboard">
+        <img title="Recetas" src="{% static 'imagenes/recetas.png' %}" alt="Recetas">
+        <p>RECETAS</p>
+    </a>
+
+    <a href="{% url 'usuarios:listar' %}" class="card-dashboard">
+        <img title="Usuarios" src="{% static 'imagenes/perfil.png' %}" alt="Usuarios">
+        <p>USUARIOS</p>
+    </a>
+
+    <a href="{% url 'app:listar_ventas' %}" class="card-dashboard">
+        <img title="Ventas" src="{% static 'imagenes/ventas.png' %}" alt="Ventas">
+        <p>VENTAS</p>
+    </a>
+</section>
+
+
+{% endblock %}

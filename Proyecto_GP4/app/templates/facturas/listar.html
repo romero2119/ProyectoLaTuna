@@ -1,0 +1,195 @@
+{% extends 'main.html' %}
+{% load static %}
+
+{% block Contenido %}
+<div style="margin-bottom: 10px; color: #00000071; font-size: 0.85em;">
+  <i class="fas fa-calendar-alt"></i>
+  Mostrando facturas de: <strong>{{ mes_actual }}</strong>
+</div>
+
+<!-- FILTROS -->
+
+<div class="tabla-wrapper">
+  <form method="GET" style="display:flex; gap:10px;">
+    <input type="text" name="usuario" placeholder="Buscar usuario" value="{{ usuario }}">
+    <input type="date" name="fecha" value="{{ fecha }}">
+    <button type="submit" title="Buscar" class="btn btn-primary btn-xs">
+      <i class="fas fa-search"></i> Buscar
+    </button>
+
+    <div style="margin-left: auto; display:flex; align-items: center; gap:10px;">
+      <a href="{% url 'app:reporte_facturas_pdf' %}" title="Exportar PDF" class="btn btn-danger btn-xs btn-exportar">
+        <i class="fas fa-file-pdf"></i> Exportar PDF
+      </a>
+      <a href="{% url 'app:reporte_facturas_excel' %}" title="Exportar Excel" class="btn btn-success btn-xs btn-exportar">
+        <i class="fas fa-file-excel"></i> Exportar Excel
+      </a>
+      <a href="{% url 'app:historial_facturas' %}" class="btn btn-info btn-xs">
+        <i class="fas fa-history"></i> Historial
+      </a>
+    </div>
+  </form>
+  <table class="tabla" id="tabla">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Venta</th>
+        <th>Total</th>
+        <th>Método de Pago</th>
+        <th>Fecha</th>
+        <th>Estado</th>
+        <th>Observación</th>
+        <th>Acción</th>
+        <th>Detalle factura</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for f in facturas %}
+      <tr {% if not f.activo %}class="fila-inactiva"{% endif %}>
+        <td>{{ f.id }}</td>
+        <td>Venta #{{ f.venta.id_venta }}</td>
+        <td>${{ f.valor_total }}</td>
+        <td>{{ f.metodo_pago }}</td>
+        <td>{{ f.fecha_hora|date:'Y-m-d H:i' }}</td>
+
+        <td>
+          {% if f.activo %}
+            <span class="badge badge-success text-dark">Activa</span>
+          {% else %}
+            <span class="badge badge-secondary text-dark">Inactiva</span>
+          {% endif %}
+        </td>
+
+        <td>
+          {% if f.observacion %}
+            <span title="{{ f.observacion }}" style="cursor:help;">
+              {{ f.observacion|truncatechars:30 }}
+            </span>
+          {% else %}
+            <span class="text-muted">—</span>
+          {% endif %}
+        </td>
+
+        <td>
+          {% if f.activo %}
+            <a href="{% url 'app:desactivar_factura' f.id %}" title="Desactivar" class="btn btn-warning btn-xs">
+              <i class="fas fa-ban"></i> Desactivar
+            </a>
+          {% else %}
+            <span class="btn btn-secondary btn-xs" style="cursor:not-allowed; opacity:0.6;" title="Inactiva">
+               Inactiva
+            </span>
+          {% endif %}
+        </td>
+        <td>
+          <a href="{% url 'app:detalle_factura' f.id %}" title="Ver detalle" class="btn btn-info btn-xs">
+            <i class="fas fa-eye"></i> Ver
+          </a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="9" style="text-align:center;">No hay facturas registradas</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- PAGINACIÓN -->
+{% if is_paginated %}
+<div style="display:flex; justify-content:center; margin-top:15px; gap:5px;">
+  {% if page_obj.has_previous %}
+    <a href="?page=1" class="btn btn-secondary btn-xs">« Primera</a>
+    <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary btn-xs">‹ Anterior</a>
+  {% endif %}
+
+  {% for num in paginator.page_range %}
+    {% if page_obj.number == num %}
+      <span class="btn btn-primary btn-xs">{{ num }}</span>
+    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+      <a href="?page={{ num }}" class="btn btn-secondary btn-xs">{{ num }}</a>
+    {% endif %}
+  {% endfor %}
+
+  {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary btn-xs">Siguiente ›</a>
+    <a href="?page={{ paginator.num_pages }}" class="btn btn-secondary btn-xs">Última »</a>
+  {% endif %}
+</div>
+<div style="text-align:center; margin-top:8px; color:#888; font-size:0.85em;">
+  Página {{ page_obj.number }} de {{ paginator.num_pages }} — {{ paginator.count }} registros en total
+</div>
+{% endif %}
+
+
+<style>
+  .fila-inactiva {
+    background-color: #f0f0f0 !important;
+    opacity: 0.75;
+    text-decoration: line-through;
+    color: #888;
+  }
+</style>
+
+<!-- ====================== SCRIPT SWEETALERT PARA EXPORTACIÓN ====================== -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    // Mensajes de Django (éxito, error, etc.)
+    {% if messages %}
+        {% for message in messages %}
+            Swal.fire({
+                icon: '{% if message.tags == "success" %}success{% elif message.tags == "error" %}error{% elif message.tags == "warning" %}warning{% else %}info{% endif %}',
+                title: '{% if message.tags == "success" %}Éxito{% elif message.tags == "error" %}Error{% elif message.tags == "warning" %}Advertencia{% else %}Info{% endif %}',
+                text: '{{ message|escapejs }}',
+                confirmButtonColor: '{% if message.tags == "success" %}#43a047{% else %}#e53935{% endif %}',
+                confirmButtonText: 'Aceptar',
+                timer: 3000,
+                timerProgressBar: true
+            });
+        {% endfor %}
+    {% endif %}
+
+    function mostrarAlerta(mensaje) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Sin resultados',
+            text: mensaje,
+            confirmButtonColor: '#e53935',
+            confirmButtonText: 'Entendido',
+            allowOutsideClick: false
+        });
+    }
+
+    // Bloquear exportación cuando no hay facturas
+    document.querySelectorAll('.btn-exportar').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            const hayFacturas = {{ facturas|length|default:0 }} > 0;
+
+            if (!hayFacturas) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+
+                const filtroUsuario = "{{ request.GET.usuario|escapejs }}";
+                const filtroFecha   = "{{ request.GET.fecha|escapejs }}";
+
+                let mensaje = "No hay facturas para exportar.";
+
+                if (filtroUsuario && filtroFecha) {
+                    mensaje = `No se encontraron facturas del usuario "${filtroUsuario}" en la fecha ${filtroFecha}.`;
+                } else if (filtroUsuario) {
+                    mensaje = `No se encontraron facturas del usuario "${filtroUsuario}".`;
+                } else if (filtroFecha) {
+                    mensaje = `No se encontraron facturas para la fecha ${filtroFecha}.`;
+                }
+
+                mostrarAlerta(mensaje);
+            }
+        });
+    });
+
+});
+</script>
+
+{% endblock %}
